@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal del cliente</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <h1 id="titulo">Portal de diagnóstico</h1>
+    <div class="fila" style="flex: 0 0 auto;">
+      <select id="selector" class="oculto" aria-label="Proyecto"></select>
+      <button onclick="salir()">Salir</button>
+    </div>
+  </header>
+  <main>
+    <p id="vacio" class="muted oculto">Aún no tienes proyectos asignados. Contacta a la consultora.</p>
+
+    <section id="contenido" class="oculto">
+      <div id="cerrado" class="aviso-caja oculto">
+        Entrega enviada. Ya no es posible agregar archivos ni editar el cuestionario; te contactaremos con los resultados.
+      </div>
+
+      <h2>1. Archivos</h2>
+      <p class="muted chico">Sube documentos, planillas, correos exportados, chats de WhatsApp, audios o fotos de documentos.
+        Puedes subir carpetas comprimidas en .zip. Máximo <span id="maxmb"></span> MB por archivo.</p>
+      <div id="zona" class="zona" tabindex="0" role="button">
+        Arrastra archivos aquí o haz clic para seleccionarlos
+        <input id="input" type="file" multiple class="oculto">
+      </div>
+      <div class="tabla-wrap" style="margin-top: 12px;">
+        <table>
+          <thead><tr><th>Archivo</th><th class="num">Tamaño</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="archivos"></tbody>
+        </table>
+      </div>
+
+      <h2>2. Cuestionario</h2>
+      <p class="muted chico">Estos datos nos permiten estimar el ahorro real. Responde con aproximaciones si no tienes el dato exacto.</p>
+      <form id="cuestionario" class="tarjeta">
+        <h3 style="margin-top: 0;">Empresa</h3>
+        <div class="fila">
+          <div><label>Número de empleados</label><input name="empleados" type="number" min="0"></div>
+          <div><label>Herramientas que usan (separadas por coma)</label><input name="herramientas" placeholder="Excel, WhatsApp, Gmail"></div>
+        </div>
+        <p></p>
+        <label>Restricciones sobre los datos (opcional)</label>
+        <input name="restricciones" placeholder="Ej: los datos de clientes no pueden salir del país">
+
+        <h3>Procesos que consumen más tiempo</h3>
+        <div id="procesos"></div>
+        <button type="button" id="agregarProceso">Agregar proceso</button>
+
+        <h3>Roles del equipo (para la capacitación)</h3>
+        <div id="roles"></div>
+        <button type="button" id="agregarRol">Agregar rol</button>
+
+        <p></p>
+        <button class="primario" type="submit">Guardar cuestionario</button>
+        <span id="msgCuestionario" class="mensaje"></span>
+      </form>
+
+      <h2>3. Enviar</h2>
+      <div class="tarjeta">
+        <p class="muted" style="margin-top: 0;">Cuando hayas subido todo y completado el cuestionario, envia la entrega para iniciar el análisis.</p>
+        <button id="enviar" class="primario">Enviar para análisis</button>
+        <span id="msgEnviar" class="mensaje"></span>
+      </div>
+    </section>
+  </main>
+
+  <template id="tplProceso">
+    <div class="tarjeta" style="margin-bottom: 10px;" data-item="proceso">
+      <div class="fila">
+        <div style="flex-basis: 260px;"><label>Proceso</label><input data-k="nombre" placeholder="Ej.: informe semanal de obra" required></div>
+        <div><label>Responsable (rol)</label><input data-k="responsable" placeholder="Ej: jefe de obra"></div>
+      </div>
+      <div class="fila" style="margin-top: 8px;">
+        <div><label>Horas al mes (todas las personas)</label><input data-k="horas_mes" type="number" min="0" step="0.5"></div>
+        <div><label>Personas involucradas</label><input data-k="personas" type="number" min="0"></div>
+        <div><label>Costo por hora (USD)</label><input data-k="costo_hora" type="number" min="0" step="0.5"></div>
+        <div><label>Cuánto molesta (1-5)</label>
+          <select data-k="dolor"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+      </div>
+      <div style="margin-top: 8px;"><label>Comentarios</label><input data-k="notas"></div>
+      <p style="margin-bottom: 0;"><button type="button" class="link" data-quitar>Quitar</button></p>
+    </div>
+  </template>
+  <template id="tplRol">
+    <div class="fila" style="margin-bottom: 10px;" data-item="rol">
+      <div><label>Rol</label><input data-k="rol" placeholder="Ej: administrativo" required></div>
+      <div><label>Personas</label><input data-k="personas" type="number" min="0"></div>
+      <div><label>Nivel digital</label>
+        <select data-k="nivel_digital"><option value="bajo">Bajo</option><option value="medio" selected>Medio</option><option value="alto">Alto</option></select></div>
+      <div style="flex: 0 0 auto;"><button type="button" class="link" data-quitar>Quitar</button></div>
+    </div>
+  </template>
+
+  <script src="/static/vendor/supabase.js"></script>
+  <script src="/config.js"></script>
+  <script src="/static/app.js"></script>
+  <script>
+    const BUCKET = "archivos-clientes";
+    const NUMERICOS = new Set(["horas_mes", "personas", "costo_hora", "dolor"]);
+    let usuarioId, proyecto, abierto;
+
+    function agregarItem(contenedor, plantilla, valores = {}) {
+      const nodo = $(plantilla).content.firstElementChild.cloneNode(true);
+      nodo.querySelectorAll("[data-k]").forEach(el => { if (valores[el.dataset.k] != null) el.value = valores[el.dataset.k]; });
+      nodo.querySelector("[data-quitar]").onclick = () => nodo.remove();
+      $(contenedor).appendChild(nodo);
+    }
+
+    function leerItems(contenedor) {
+      return [...$(contenedor).children].map(n => Object.fromEntries([...n.querySelectorAll("[data-k]")].map(el => {
+        const v = el.value.trim();
+        return [el.dataset.k, NUMERICOS.has(el.dataset.k) ? (v === "" ? null : Number(v)) : v];
+      })));
+    }
+
+    async function cargarArchivos() {
+      const { data, error } = await sb.from("archivos").select("*").eq("proyecto_id", proyecto.id).order("created_at");
+      if (error) return;
+      $("#archivos").innerHTML = data.length ? data.map(a => `
+        <tr><td>${esc(a.nombre)}</td><td class="num">${mb(a.tamano)}</td><td>${chipEstado("ok")}</td>
+        <td>${abierto && a.subido_por === usuarioId ? `<button class="link" data-borrar="${esc(a.id)}">Quitar</button>` : ""}</td></tr>`).join("")
+        : `<tr><td colspan="4" class="muted">Aún no hay archivos.</td></tr>`;
+      $("#archivos").querySelectorAll("[data-borrar]").forEach(b => b.onclick = () => borrar(data.find(a => a.id === b.dataset.borrar)));
+    }
+
+    async function borrar(a) {
+      await sb.storage.from(BUCKET).remove([a.ruta]);
+      await sb.from("archivos").delete().eq("id", a.id);
+      cargarArchivos();
+    }
+
+    async function subir(files) {
+      if (!abierto) return;
+      const maxBytes = window.AIAUDIT.maxMb * 1048576;
+      for (const f of files) {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `<td>${esc(f.name)}</td><td class="num">${mb(f.size)}</td><td>${chipEstado("ejecutando")}</td><td></td>`;
+        $("#archivos").prepend(fila);
+        if (f.size > maxBytes) { fila.children[2].innerHTML = chipEstado("error") + " supera el máximo"; continue; }
+        // ruta: <proyecto>/<uuid>-<nombre>; la primera carpeta es la que valida RLS en Storage
+        const ruta = `${proyecto.id}/${crypto.randomUUID()}-${f.name.replace(/[^\w.\- ]/g, "_")}`;
+        const { error } = await sb.storage.from(BUCKET).upload(ruta, f, { contentType: f.type || "application/octet-stream" });
+        const { error: e2 } = error ? { error } : await sb.from("archivos").insert({
+          proyecto_id: proyecto.id, ruta, nombre: f.name, tamano: f.size, mime: f.type || null, subido_por: usuarioId });
+        fila.children[2].innerHTML = (error || e2) ? chipEstado("error") + ` ${esc((error || e2).message)}` : chipEstado("ok");
+      }
+      cargarArchivos();
+    }
+
+    async function cargarCuestionario() {
+      const { data } = await sb.from("cuestionarios").select("datos").eq("proyecto_id", proyecto.id).maybeSingle();
+      const d = data?.datos || {};
+      const f = $("#cuestionario"), emp = d.empresa || {};
+      f.empleados.value = emp.empleados ?? "";
+      f.herramientas.value = (emp.herramientas_actuales || []).join(", ");
+      f.restricciones.value = (emp.restricciones || []).join("; ");
+      $("#procesos").innerHTML = ""; $("#roles").innerHTML = "";
+      (d.procesos?.length ? d.procesos : [{}]).forEach(p => agregarItem("#procesos", "#tplProceso", p));
+      (d.roles?.length ? d.roles : [{}]).forEach(r => agregarItem("#roles", "#tplRol", r));
+    }
+
+    async function guardarCuestionario(e) {
+      e?.preventDefault();
+      const f = $("#cuestionario");
+      const lista = (v, sep) => v.split(sep).map(x => x.trim()).filter(Boolean);
+      const datos = {
+        empresa: { empleados: f.empleados.value ? Number(f.empleados.value) : null,
+                   herramientas_actuales: lista(f.herramientas.value, ","), restricciones: lista(f.restricciones.value, ";") },
+        procesos: leerItems("#procesos").filter(p => p.nombre),
+        roles: leerItems("#roles").filter(r => r.rol),
+      };
+      const { error } = await sb.from("cuestionarios").upsert({ proyecto_id: proyecto.id, datos });
+      mensaje($("#msgCuestionario"), error ? `No se pudo guardar: ${error.message}` : "Guardado.", !!error);
+      return !error;
+    }
+
+    async function enviar() {
+      if (!confirm("Después de enviar no podrás agregar archivos ni editar el cuestionario. ¿Continuar?")) return;
+      if (!(await guardarCuestionario())) return;
+      const { error } = await sb.rpc("enviar_proyecto", { p: proyecto.id });
+      if (error) return mensaje($("#msgEnviar"), error.message, true);
+      await abrir(proyecto.id);
+    }
+
+    function bloquear() {
+      $("#cerrado").classList.toggle("oculto", abierto);
+      $("#zona").classList.toggle("oculto", !abierto);
+      $("#cuestionario").querySelectorAll("input, select, button").forEach(el => el.disabled = !abierto);
+      $("#enviar").disabled = !abierto;
+    }
+
+    async function abrir(id) {
+      const { data } = await sb.from("proyectos").select("*").eq("id", id).single();
+      proyecto = data;
+      abierto = proyecto.estado === "recibiendo";
+      $("#titulo").textContent = proyecto.empresa;
+      await Promise.all([cargarArchivos(), cargarCuestionario()]);
+      bloquear();
+    }
+
+    (async () => {
+      const s = await sesion();
+      usuarioId = s.user.id;
+      const { data: perfil } = await sb.from("perfiles").select("rol").eq("id", usuarioId).single();
+      if (perfil?.rol === "admin") return location.href = "/admin";
+      $("#maxmb").textContent = window.AIAUDIT.maxMb;
+      const { data: proyectos } = await sb.from("proyectos").select("id, empresa").order("created_at", { ascending: false });
+      if (!proyectos?.length) return $("#vacio").classList.remove("oculto");
+      if (proyectos.length > 1) {
+        $("#selector").innerHTML = proyectos.map(p => `<option value="${esc(p.id)}">${esc(p.empresa)}</option>`).join("");
+        $("#selector").classList.remove("oculto");
+        $("#selector").onchange = e => abrir(e.target.value);
+      }
+      $("#contenido").classList.remove("oculto");
+      await abrir(proyectos[0].id);
+    })();
+
+    const zona = $("#zona"), input = $("#input");
+    zona.onclick = () => input.click();
+    zona.onkeydown = e => { if (e.key === "Enter" || e.key === " ") input.click(); };
+    input.onchange = () => { subir([...input.files]); input.value = ""; };
+    zona.ondragover = e => { e.preventDefault(); zona.classList.add("activa"); };
+    zona.ondragleave = () => zona.classList.remove("activa");
+    zona.ondrop = e => { e.preventDefault(); zona.classList.remove("activa"); subir([...e.dataTransfer.files]); };
+    $("#agregarProceso").onclick = () => agregarItem("#procesos", "#tplProceso");
+    $("#agregarRol").onclick = () => agregarItem("#roles", "#tplRol");
+    $("#cuestionario").onsubmit = guardarCuestionario;
+    $("#enviar").onclick = enviar;
+  </script>
+</body>
+</html>

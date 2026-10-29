@@ -12,8 +12,9 @@ from aiaudit.schemas import Diagnostico, Proceso, ProcesoLLM
 
 
 def _norm(t: str) -> str:
+    """Minusculas, sin tildes ni puntuacion y con espacios simples: 'Cubicación,' -> 'cubicacion'."""
     t = unicodedata.normalize("NFKD", t.lower()).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z0-9 ]", " ", t).strip()
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9]", " ", t)).strip()
 
 
 def _similar(a: str, b: str, umbral: float = 0.72) -> bool:

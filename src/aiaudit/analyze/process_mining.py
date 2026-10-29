@@ -11,6 +11,7 @@ import warnings
 
 import pandas as pd
 
+from aiaudit.analyze.consolidate import _norm
 from aiaudit.config import Cliente, taxonomia
 from aiaudit.schemas import PasoLLM, ProcesoLLM
 
@@ -49,8 +50,8 @@ def analizar_log(df: pd.DataFrame) -> dict:
 
 
 def _match_taxonomia(texto: str, sector: str) -> dict | None:
-    texto = texto.lower()
-    puntajes = [(sum(k in texto for k in t["palabras_clave"]), t) for t in taxonomia(sector)]
+    texto = _norm(texto)
+    puntajes = [(sum(_norm(k) in texto for k in t["palabras_clave"]), t) for t in taxonomia(sector)]
     mejor = max(puntajes, key=lambda x: x[0], default=(0, None))
     return mejor[1] if mejor[0] else None
 
@@ -62,13 +63,13 @@ def a_proceso(nombre: str, m: dict, sector: str) -> ProcesoLLM:
     if m["casos_con_retrabajo_pct"] > 0:
         dolores.append(f"{m['casos_con_retrabajo_pct']:.0%} de los casos repite alguna actividad (retrabajo)")
     if m["variantes"] > 1:
-        dolores.append(f"{m['variantes']} variantes distintas del flujo: el proceso no esta estandarizado")
+        dolores.append(f"{m['variantes']} variantes distintas del flujo: el proceso no está estandarizado")
     return ProcesoLLM(
         id_taxonomia=t["id"] if t else "",
         nombre=t["nombre"] if t else f"Flujo registrado en {nombre}",
         area=t["area"] if t else "",
         descripcion=(f"Flujo medido en {m['casos']} casos y {m['eventos']} eventos. "
-                     f"Duracion media {m['duracion_media_h']} h (max {m['duracion_max_h']} h)."),
+                     f"Duración media {m['duracion_media_h']} h (max {m['duracion_max_h']} h)."),
         actores=m["recursos"][:10], herramientas=["registro tabular"],
         pasos=[PasoLLM(orden=i, descripcion=a, actor="", herramienta="", manual=True) for i, a in enumerate(principal, 1)],
         frecuencia="desconocida", dolores=dolores, evidencias=[f"log:{nombre}"], confianza=0.95,

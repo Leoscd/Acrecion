@@ -63,3 +63,7 @@ Cada etapa lee y escribe en disco, así que se puede usar sola en otro proyecto,
 - Docling y Whisper descargan modelos desde HuggingFace la primera vez que se usan.
 - Branding: si existe `src/aiaudit/report/templates/base.docx` (con tu logo y estilos), se usa como base de todos los informes.
 - El modelo de OpenAI y sus precios se configuran en `config/settings.yaml`; verifícalos en tu cuenta.
+
+## Portal web
+
+Los clientes suben sus archivos y llenan el cuestionario desde el navegador; tú procesas y revisas los resultados en `/admin`. Stack: Supabase (login, Postgres con RLS, Storage) + FastAPI + un worker que corre este pipeline. Código en `src/aiaudit/portal/`, migración en `supabase/migrations/`. Instalación y despliegue en [DEPLOY.md](DEPLOY.md).

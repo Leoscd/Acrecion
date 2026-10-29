@@ -29,7 +29,8 @@ media    = ["faster-whisper>=1.2", "rapidocr-onnxruntime>=1.2"]
 mining   = ["pm4py>=2.7"]
 privacy  = ["presidio-analyzer>=2.2", "presidio-anonymizer>=2.2"]
 magic    = ["python-magic>=0.4.27"]
-dev      = ["pytest>=8", "reportlab>=4"]
+portal   = ["supabase>=2.33", "fastapi>=0.115", "uvicorn[standard]>=0.30", "email-validator>=2"]
+dev      = ["pytest>=8", "reportlab>=4", "httpx>=0.27"]
 all      = ["aiaudit[llm,docs,comms,media,mining,privacy,magic]"]
 
 [project.scripts]
@@ -39,4 +40,6 @@ aiaudit = "aiaudit.cli:app"
 where = ["src"]
 
 [tool.setuptools.package-data]
-aiaudit = ["report/templates/*"]
+aiaudit = ["report/templates/*", "portal/static/*", "portal/static/vendor/*"]
+[tool.pytest.ini_options]
+pythonpath = ["tests"]
