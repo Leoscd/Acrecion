@@ -16,7 +16,7 @@ from aiaudit.schemas import Diagnostico, Oportunidad, Proceso
 log = logging.getLogger(__name__)
 
 HERRAMIENTAS = {
-    "extraccion_documental": ["OpenAI API (vision + structured outputs)", "Docling", "n8n"],
+    "extraccion_documental": ["OpenAI API (visión + structured outputs)", "Docling", "n8n"],
     "generacion_documentos": ["OpenAI API / ChatGPT con plantillas", "docxtpl", "n8n"],
     "asistente_rag": ["OpenAI File Search", "LlamaIndex", "Open WebUI"],
     "automatizacion_datos": ["n8n", "Python + pandas", "API de Google Sheets / Excel"],
@@ -36,21 +36,21 @@ class PropuestaLLM(BaseModel):
     justificacion: str
 
 
-SISTEMA = f"""Eres arquitecto de soluciones de IA para PyMEs y constructoras. Para el proceso descrito propone UNA solucion
-concreta y realista de implementar con herramientas actuales (APIs de LLM, automatizacion no-code, scripts Python).
+SISTEMA = f"""Eres arquitecto de soluciones de IA para PyMEs y constructoras. Para el proceso descrito propone UNA solución
+concreta y realista de implementar con herramientas actuales (APIs de LLM, automatización no-code, scripts Python).
 - tipo_solucion: una de {list(HERRAMIENTAS)}.
-- automatizable: fraccion de las horas del proceso que la solucion elimina (se conservador: 0.2-0.7 habitual).
-- complejidad: 1 prompt/plantilla, 2 no-code, 3 integracion entre sistemas, 4 desarrollo a medida, 5 proyecto con datos/modelos propios.
-- Considera las herramientas que la empresa ya usa. Responde en espanol."""
+- automatizable: fraccion de las horas del proceso que la solución elimina (se conservador: 0.2-0.7 habitual).
+- complejidad: 1 prompt/plantilla, 2 no-code, 3 integración entre sistemas, 4 desarrollo a medida, 5 proyecto con datos/modelos propios.
+- Considera las herramientas que la empresa ya usa. Responde en español con ortografía correcta (tildes y ñ)."""
 
 
 def _propuesta_base(p: Proceso, tax: dict) -> PropuestaLLM:
     if t := tax.get(p.id):
         return PropuestaLLM(solucion=t["solucion_ia"], tipo_solucion=t["tipo_solucion"],
                             herramientas_sugeridas=HERRAMIENTAS[t["tipo_solucion"]], automatizable=t["automatizable"],
-                            complejidad=t["complejidad"], justificacion="Segun catalogo del sector.")
+                            complejidad=t["complejidad"], justificacion="Según catálogo del sector.")
     manuales = sum(x.manual for x in p.pasos)
-    return PropuestaLLM(solucion="Revisar en taller con el cliente: proceso fuera del catalogo.", tipo_solucion="automatizacion_datos",
+    return PropuestaLLM(solucion="Revisar en taller con el cliente: proceso fuera del catálogo.", tipo_solucion="automatizacion_datos",
                         herramientas_sugeridas=HERRAMIENTAS["automatizacion_datos"],
                         automatizable=0.3 if manuales else 0.2, complejidad=3, justificacion="Valores por defecto.")
 
@@ -105,7 +105,7 @@ def priorizar(cliente: Cliente) -> dict:
             try:
                 prop = _propuesta_llm(p, llm, herramientas_cliente)
             except Exception as e:
-                log.warning("Propuesta LLM fallo para %s: %s (se usa catalogo)", p.id, e)
+                log.warning("Propuesta LLM fallo para %s: %s (se usa catálogo)", p.id, e)
         oportunidades.append(evaluar(p, prop, cfg))
     diag.oportunidades = sorted(oportunidades, key=lambda o: o.puntaje, reverse=True)
     cliente.diagnostico.write_text(diag.model_dump_json(indent=2), encoding="utf-8")
