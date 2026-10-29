@@ -1,0 +1,27 @@
+# Configuracion global del pipeline. Se puede sobrescribir por cliente en data/<cliente>/settings.yaml
+llm:
+  provider: openai          # openai | ollama | offline (heuristico, sin API; para pruebas)
+  model: gpt-5-mini         # verificar modelos disponibles en tu cuenta OpenAI
+  base_url: null            # ollama: http://localhost:11434/v1
+  temperature: null         # null = valor por defecto del modelo (algunos modelos no aceptan otro)
+  max_chars_por_lote: 12000 # tamano de cada lote de fragmentos enviado al LLM
+  precio_usd_1m_input: 0.25 # para estimar costo; ajustar a la tarifa vigente
+  precio_usd_1m_output: 2.0
+
+ingesta:
+  motor_documentos: auto    # auto | docling | markitdown
+  whisper_modelo: small     # tiny | base | small | medium | large-v3
+  idioma: es
+  max_chars_fragmento: 3000
+
+privacidad:
+  anonimizar: true          # obligatorio si el proveedor LLM es externo
+  usar_presidio: true       # NER para nombres; si no esta instalado usa solo regex
+  nombres_extra: []         # nombres que siempre se anonimizan (ej: dueno, clientes clave)
+  idioma: es
+
+priorizacion:
+  costo_hora_default: 10.0  # USD; usar el dato del cuestionario cuando exista
+  horas_mes_supuesto: 10    # se usa SOLO si el proceso no esta en el cuestionario (queda marcado como no validado)
+  propuestas_llm: true      # con proveedor LLM, propone la solucion por proceso; si no, usa la taxonomia
+  moneda: USD

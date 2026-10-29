@@ -1,0 +1,42 @@
+empresa:
+  nombre: Constructora Demo SpA
+  sector: construccion
+  empleados: 45
+  herramientas_actuales: [Excel, WhatsApp, Gmail, AutoCAD]
+  restricciones: []
+
+procesos:
+  - id: informes_obra
+    nombre: Informes semanales de obra
+    responsable: jefe de obra
+    horas_mes: 16
+    personas: 2
+    costo_hora: 18
+    dolor: 4
+    notas: Se arma cada viernes copiando fotos de WhatsApp
+  - id: compras_materiales
+    nombre: Solicitud y compra de materiales
+    responsable: adquisiciones
+    horas_mes: 40
+    personas: 2
+    costo_hora: 14
+    dolor: 5
+    notas: Aprobaciones lentas generan atrasos en obra
+  - id: presupuestos
+    nombre: Presupuestos para licitaciones
+    responsable: estudio de propuestas
+    horas_mes: 60
+    personas: 1
+    costo_hora: 22
+    dolor: 3
+
+roles:
+  - rol: Jefe de obra
+    personas: 3
+    nivel_digital: medio
+  - rol: Adquisiciones
+    personas: 2
+    nivel_digital: medio
+  - rol: Bodeguero
+    personas: 3
+    nivel_digital: bajo

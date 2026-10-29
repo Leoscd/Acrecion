@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+data/*
+!data/.gitkeep
+!data/demo_constructora/
+data/demo_constructora/interim/
+data/demo_constructora/processed/
+data/demo_constructora/outputs/

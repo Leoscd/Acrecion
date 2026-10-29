@@ -1,0 +1,102 @@
+# Procesos tipo por sector. Sirven como guia para el LLM y como base del modo offline.
+# palabras_clave: senales en los documentos. automatizable: % estimado de la carga que la IA puede absorber.
+# complejidad: 1 (no-code / prompt) a 5 (desarrollo a medida con integraciones).
+construccion:
+  - id: presupuestos
+    nombre: Elaboracion de presupuestos y cubicaciones
+    area: Comercial / Estudio de propuestas
+    palabras_clave: [presupuesto, cubicacion, partida, apu, precio unitario, cotizacion, licitacion, itemizado]
+    solucion_ia: Extraccion automatica de cantidades desde planos/planillas y generacion de presupuesto con base de precios
+    tipo_solucion: extraccion_documental
+    automatizable: 0.5
+    complejidad: 4
+  - id: informes_obra
+    nombre: Informes diarios y semanales de obra
+    area: Operaciones / Obra
+    palabras_clave: [informe de obra, libro de obra, avance, bitacora, visita a obra, reporte semanal, inspeccion]
+    solucion_ia: Generacion de informes desde notas de voz, fotos y checklists con un asistente LLM
+    tipo_solucion: generacion_documentos
+    automatizable: 0.6
+    complejidad: 2
+  - id: compras_materiales
+    nombre: Solicitud y compra de materiales
+    area: Abastecimiento
+    palabras_clave: [orden de compra, cotizacion proveedor, materiales, solicitud de material, proveedor, factura, guia de despacho]
+    solucion_ia: Comparador automatico de cotizaciones y lectura de facturas/guias hacia planilla o ERP
+    tipo_solucion: extraccion_documental
+    automatizable: 0.5
+    complejidad: 3
+  - id: estados_pago
+    nombre: Estados de pago y control de avance financiero
+    area: Administracion de contratos
+    palabras_clave: [estado de pago, avance financiero, retencion, curva s, valorizacion, subcontrato]
+    solucion_ia: Consolidacion automatica de avance fisico/financiero y borrador de estado de pago
+    tipo_solucion: automatizacion_datos
+    automatizable: 0.4
+    complejidad: 3
+  - id: rfi_coordinacion
+    nombre: Consultas tecnicas (RFI) y coordinacion de especialidades
+    area: Oficina tecnica
+    palabras_clave: [rfi, consulta tecnica, interferencia, especialidades, plano, revision, bim, coordinacion]
+    solucion_ia: Asistente RAG sobre especificaciones y planos para responder consultas y trazar respuestas
+    tipo_solucion: asistente_rag
+    automatizable: 0.35
+    complejidad: 3
+  - id: seguridad_calidad
+    nombre: Registros de seguridad y calidad
+    area: Prevencion de riesgos / Calidad
+    palabras_clave: [prevencion, charla, ast, epp, no conformidad, protocolo, checklist, calidad]
+    solucion_ia: Formularios moviles con transcripcion y clasificacion automatica de hallazgos
+    tipo_solucion: clasificacion
+    automatizable: 0.5
+    complejidad: 2
+
+pyme:
+  - id: atencion_cliente
+    nombre: Atencion de consultas de clientes
+    area: Ventas / Servicio al cliente
+    palabras_clave: [consulta, cliente, whatsapp, reclamo, respuesta, pedido, horario, precio]
+    solucion_ia: Asistente de respuestas con base de conocimiento y derivacion a humano
+    tipo_solucion: asistente_rag
+    automatizable: 0.6
+    complejidad: 2
+  - id: facturacion_cobranza
+    nombre: Facturacion y cobranza
+    area: Finanzas
+    palabras_clave: [factura, cobranza, pago, vencimiento, deuda, transferencia, boleta, nota de credito]
+    solucion_ia: Lectura automatica de facturas, conciliacion y recordatorios de cobro redactados por IA
+    tipo_solucion: automatizacion_datos
+    automatizable: 0.55
+    complejidad: 3
+  - id: reportes_gestion
+    nombre: Reportes de gestion y planillas manuales
+    area: Gerencia / Control de gestion
+    palabras_clave: [reporte, planilla, excel, kpi, ventas mensuales, consolidar, informe mensual, dashboard]
+    solucion_ia: Consolidacion automatica de datos y reporte narrativo generado por LLM
+    tipo_solucion: automatizacion_datos
+    automatizable: 0.6
+    complejidad: 2
+  - id: correo_coordinacion
+    nombre: Gestion de correos y coordinacion interna
+    area: Transversal
+    palabras_clave: [correo, reunion, coordinar, seguimiento, recordatorio, acta, pendiente, agenda]
+    solucion_ia: Triaje de correo, actas automaticas de reuniones y seguimiento de pendientes
+    tipo_solucion: generacion_documentos
+    automatizable: 0.4
+    complejidad: 1
+  - id: rrhh_seleccion
+    nombre: Reclutamiento y administracion de personal
+    area: RRHH
+    palabras_clave: [curriculum, postulante, contrato, vacaciones, liquidacion, entrevista, onboarding]
+    solucion_ia: Filtrado de CVs con rubrica y respuestas automaticas a consultas internas de RRHH
+    tipo_solucion: clasificacion
+    automatizable: 0.4
+    complejidad: 2
+  - id: propuestas_comerciales
+    nombre: Elaboracion de propuestas comerciales
+    area: Ventas
+    palabras_clave: [propuesta, cotizacion, oferta, cliente potencial, presentacion, precio, condiciones comerciales]
+    solucion_ia: Generador de propuestas desde plantillas y datos del CRM
+    tipo_solucion: generacion_documentos
+    automatizable: 0.5
+    complejidad: 2

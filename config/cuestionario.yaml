@@ -1,0 +1,23 @@
+# Plantilla de entrevista. Copiar a data/<cliente>/cuestionario.yaml y completar con el cliente.
+# Los procesos se cruzan con los detectados por id (si coincide con la taxonomia) o por nombre.
+empresa:
+  nombre: ""
+  sector: pyme              # construccion | pyme
+  empleados: 0
+  herramientas_actuales: [] # ej: [Excel, WhatsApp, Gmail, ERP X]
+  restricciones: []         # ej: [datos de clientes no salen del pais]
+
+procesos:
+  - id: ""                  # id de la taxonomia o slug propio
+    nombre: ""
+    responsable: ""         # rol, no persona
+    horas_mes: 0            # horas totales al mes que consume (todas las personas)
+    personas: 0
+    costo_hora: null        # USD; null = costo_hora_default
+    dolor: 3                # 1-5, cuanto le molesta al cliente
+    notas: ""
+
+roles:                      # para la capacitacion
+  - rol: ""
+    personas: 0
+    nivel_digital: medio    # bajo | medio | alto

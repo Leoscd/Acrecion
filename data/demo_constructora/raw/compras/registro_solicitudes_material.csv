@@ -1,0 +1,64 @@
+N solicitud,Etapa,Responsable,Fecha
+SM-001,Solicitud de material,Jefe de obra,05/03/2024 00:00
+SM-001,Cotizacion proveedor,Adquisiciones,07/03/2024 00:00
+SM-001,Aprobacion,Gerente,10/03/2024 00:00
+SM-001,Orden de compra,Adquisiciones,11/03/2024 00:00
+SM-001,Recepcion en obra,Bodeguero,15/03/2024 00:00
+SM-002,Solicitud de material,Jefe de obra,09/03/2024 00:00
+SM-002,Cotizacion proveedor,Adquisiciones,11/03/2024 00:00
+SM-002,Aprobacion,Gerente,14/03/2024 00:00
+SM-002,Orden de compra,Adquisiciones,15/03/2024 00:00
+SM-002,Recepcion en obra,Bodeguero,19/03/2024 00:00
+SM-003,Solicitud de material,Jefe de obra,10/03/2024 00:00
+SM-003,Cotizacion proveedor,Adquisiciones,12/03/2024 00:00
+SM-003,Aprobacion,Gerente,15/03/2024 00:00
+SM-003,Orden de compra,Adquisiciones,16/03/2024 00:00
+SM-003,Recepcion en obra,Bodeguero,20/03/2024 00:00
+SM-004,Solicitud de material,Jefe de obra,14/03/2024 00:00
+SM-004,Cotizacion proveedor,Adquisiciones,16/03/2024 00:00
+SM-004,Cotizacion proveedor,Adquisiciones,17/03/2024 00:00
+SM-004,Aprobacion,Gerente,19/03/2024 00:00
+SM-004,Orden de compra,Adquisiciones,20/03/2024 00:00
+SM-004,Recepcion en obra,Bodeguero,24/03/2024 00:00
+SM-005,Solicitud de material,Jefe de obra,18/03/2024 00:00
+SM-005,Cotizacion proveedor,Adquisiciones,20/03/2024 00:00
+SM-005,Aprobacion,Gerente,23/03/2024 00:00
+SM-005,Orden de compra,Adquisiciones,24/03/2024 00:00
+SM-005,Recepcion en obra,Bodeguero,28/03/2024 00:00
+SM-006,Solicitud de material,Jefe de obra,19/03/2024 00:00
+SM-006,Cotizacion proveedor,Adquisiciones,21/03/2024 00:00
+SM-006,Aprobacion,Gerente,24/03/2024 00:00
+SM-006,Orden de compra,Adquisiciones,25/03/2024 00:00
+SM-006,Recepcion en obra,Bodeguero,29/03/2024 00:00
+SM-007,Solicitud de material,Jefe de obra,23/03/2024 00:00
+SM-007,Cotizacion proveedor,Adquisiciones,25/03/2024 00:00
+SM-007,Aprobacion,Gerente,28/03/2024 00:00
+SM-007,Orden de compra,Adquisiciones,29/03/2024 00:00
+SM-007,Recepcion en obra,Bodeguero,02/04/2024 00:00
+SM-008,Solicitud de material,Jefe de obra,27/03/2024 00:00
+SM-008,Cotizacion proveedor,Adquisiciones,29/03/2024 00:00
+SM-008,Cotizacion proveedor,Adquisiciones,29/03/2024 00:00
+SM-008,Aprobacion,Gerente,01/04/2024 00:00
+SM-008,Orden de compra,Adquisiciones,02/04/2024 00:00
+SM-008,Recepcion en obra,Bodeguero,06/04/2024 00:00
+SM-009,Solicitud de material,Jefe de obra,28/03/2024 00:00
+SM-009,Cotizacion proveedor,Adquisiciones,30/03/2024 00:00
+SM-009,Aprobacion,Gerente,02/04/2024 00:00
+SM-009,Orden de compra,Adquisiciones,03/04/2024 00:00
+SM-009,Recepcion en obra,Bodeguero,07/04/2024 00:00
+SM-010,Solicitud de material,Jefe de obra,01/04/2024 00:00
+SM-010,Cotizacion proveedor,Adquisiciones,03/04/2024 00:00
+SM-010,Aprobacion,Gerente,06/04/2024 00:00
+SM-010,Orden de compra,Adquisiciones,07/04/2024 00:00
+SM-010,Recepcion en obra,Bodeguero,11/04/2024 00:00
+SM-011,Solicitud de material,Jefe de obra,05/04/2024 00:00
+SM-011,Cotizacion proveedor,Adquisiciones,07/04/2024 00:00
+SM-011,Aprobacion,Gerente,10/04/2024 00:00
+SM-011,Orden de compra,Adquisiciones,11/04/2024 00:00
+SM-011,Recepcion en obra,Bodeguero,15/04/2024 00:00
+SM-012,Solicitud de material,Jefe de obra,06/04/2024 00:00
+SM-012,Cotizacion proveedor,Adquisiciones,08/04/2024 00:00
+SM-012,Cotizacion proveedor,Adquisiciones,10/04/2024 00:00
+SM-012,Aprobacion,Gerente,11/04/2024 00:00
+SM-012,Orden de compra,Adquisiciones,12/04/2024 00:00
+SM-012,Recepcion en obra,Bodeguero,16/04/2024 00:00
