@@ -8,3 +8,5 @@ data/*
 data/demo_constructora/interim/
 data/demo_constructora/processed/
 data/demo_constructora/outputs/
+*.egg-info/
+.pytest_cache/

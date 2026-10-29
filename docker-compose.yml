@@ -1,0 +1,33 @@
+# Portal + worker + Caddy (HTTPS automatico con Let's Encrypt).
+# Uso: cp .env.example .env  (completar)  &&  docker compose up -d --build
+services:
+  web:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+    expose: ["8000"]
+
+  worker:
+    build: .
+    env_file: .env
+    command: ["python", "-m", "aiaudit.portal.worker"]
+    restart: unless-stopped
+    volumes:
+      - datos:/data            # trabajo temporal; los crudos se borran al terminar cada trabajo
+      - modelos:/root/.cache   # modelos de Whisper/Docling/HuggingFace: se descargan una sola vez
+
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMINIO: ${DOMINIO}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on: [web]
+
+volumes:
+  datos:
+  modelos:
+  caddy_data:

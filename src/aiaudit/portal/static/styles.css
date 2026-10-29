@@ -1,0 +1,108 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f6f4;
+  --surface: #fcfcfb;
+  --borde: #e2e1dc;
+  --texto: #0b0b0b;
+  --texto-2: #52514e;
+  --texto-3: #7a7974;
+  --acento: #1f3a5f;
+  --acento-texto: #ffffff;
+  --serie-1: #2a78d6;
+  --ok: #1a7f37;
+  --aviso: #9a6700;
+  --error: #c62828;
+  --radio: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --borde: #2e2e2c;
+    --texto: #f0efec;
+    --texto-2: #c3c2b7;
+    --texto-3: #8f8e86;
+    --acento: #8fb3e3;
+    --acento-texto: #0b0b0b;
+    --serie-1: #3987e5;
+    --ok: #4ac26b;
+    --aviso: #d4a72c;
+    --error: #ef6c6c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface: #1a1a19; --borde: #2e2e2c; --texto: #f0efec; --texto-2: #c3c2b7;
+  --texto-3: #8f8e86; --acento: #8fb3e3; --acento-texto: #0b0b0b; --serie-1: #3987e5;
+  --ok: #4ac26b; --aviso: #d4a72c; --error: #ef6c6c;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--texto);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--borde); background: var(--surface);
+}
+header h1 { font-size: 17px; margin: 0; }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+h2 { font-size: 18px; margin: 32px 0 12px; }
+h3 { font-size: 15px; margin: 20px 0 8px; }
+.tarjeta { background: var(--surface); border: 1px solid var(--borde); border-radius: var(--radio); padding: 16px; }
+.muted { color: var(--texto-2); }
+.chico { font-size: 13px; }
+.fila { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
+.fila > * { flex: 1 1 180px; }
+label { display: block; font-size: 13px; color: var(--texto-2); margin-bottom: 4px; }
+input, select, textarea {
+  width: 100%; padding: 8px 10px; font: inherit; color: var(--texto);
+  background: var(--bg); border: 1px solid var(--borde); border-radius: 6px;
+}
+textarea { min-height: 60px; }
+button {
+  font: inherit; padding: 8px 14px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--borde); background: var(--surface); color: var(--texto);
+}
+button.primario { background: var(--acento); color: var(--acento-texto); border-color: var(--acento); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button.link { border: 0; background: none; color: var(--acento); padding: 0; text-decoration: underline; }
+.tabla-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+th { color: var(--texto-2); font-weight: 600; font-size: 13px; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.clic { cursor: pointer; }
+tr.clic:hover { background: var(--bg); }
+.zona {
+  border: 2px dashed var(--borde); border-radius: var(--radio); padding: 28px 16px;
+  text-align: center; color: var(--texto-2); cursor: pointer;
+}
+.zona.activa { border-color: var(--acento); color: var(--texto); }
+.estado { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--texto-2); }
+.estado::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--texto-3); }
+.estado.ok::before { background: var(--ok); }
+.estado.aviso::before { background: var(--aviso); }
+.estado.error::before { background: var(--error); }
+.aviso-caja { border-left: 3px solid var(--aviso); padding: 10px 14px; background: var(--surface); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.kpi .valor { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.kpi .etiqueta { font-size: 13px; color: var(--texto-2); }
+.oculto { display: none !important; }
+.mensaje { min-height: 20px; font-size: 13px; color: var(--texto-2); }
+.mensaje.error { color: var(--error); }
+
+/* Grafico de barras horizontales (una serie) */
+.barras { display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 6px 12px; align-items: center; }
+.barras .nombre { font-size: 13px; color: var(--texto-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barras .pista { position: relative; height: 24px; display: flex; align-items: center; gap: 8px; }
+.barras .barra { height: 16px; background: var(--serie-1); border-radius: 0 4px 4px 0; min-width: 2px; }
+.barras .valor { font-size: 13px; color: var(--texto); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.barras .pista:hover .barra { filter: brightness(1.12); }
+.tooltip {
+  position: fixed; pointer-events: none; z-index: 10; padding: 8px 10px; font-size: 13px;
+  background: var(--surface); color: var(--texto); border: 1px solid var(--borde); border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.12); max-width: 280px;
+}

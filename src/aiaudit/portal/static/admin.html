@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel de diagnósticos</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <h1><button class="link" onclick="verLista()" style="font-size: 17px; text-decoration: none; color: inherit;">Panel de diagnósticos</button></h1>
+    <button onclick="salir()">Salir</button>
+  </header>
+  <main>
+    <!-- Lista de proyectos -->
+    <section id="vistaLista">
+      <h2 style="margin-top: 0;">Nuevo proyecto</h2>
+      <form id="formNuevo" class="tarjeta">
+        <div class="fila">
+          <div><label>Empresa</label><input name="empresa" required></div>
+          <div><label>Sector</label><select name="sector"><option value="pyme">PyME</option><option value="construccion">Construcción</option></select></div>
+          <div><label>Correo del cliente</label><input name="email" type="email" required></div>
+          <div style="flex: 0 0 auto;"><button class="primario" type="submit">Crear e invitar</button></div>
+        </div>
+        <p id="msgNuevo" class="mensaje"></p>
+      </form>
+
+      <h2>Proyectos</h2>
+      <div class="tarjeta tabla-wrap">
+        <table>
+          <thead><tr><th>Empresa</th><th>Sector</th><th>Estado</th><th class="num">Archivos</th><th>Actualizado</th></tr></thead>
+          <tbody id="proyectos"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Detalle de un proyecto -->
+    <section id="vistaDetalle" class="oculto">
+      <div class="fila" style="align-items: center;">
+        <div><h2 id="dEmpresa" style="margin: 0;"></h2><span id="dEstado"></span></div>
+        <div class="fila" style="flex: 0 0 auto; align-items: center;">
+          <select id="llm" aria-label="Proveedor LLM" style="width: auto;">
+            <option value="openai">OpenAI</option><option value="ollama">Ollama (local)</option><option value="offline">Offline</option>
+          </select>
+          <button id="btnProcesar" class="primario">Procesar</button>
+          <button id="btnReabrir">Reabrir carga</button>
+          <button id="btnEntregar">Marcar entregado</button>
+        </div>
+      </div>
+      <p id="msgDetalle" class="mensaje"></p>
+
+      <h2>Resultados</h2>
+      <div id="sinResultados" class="muted">Aún no hay resultados. Procesa el proyecto cuando el cliente envíe su entrega.</div>
+      <div id="resultados" class="oculto">
+        <div class="kpis" id="kpis"></div>
+        <div id="avisoSupuestos" class="aviso-caja oculto" style="margin-top: 12px;"></div>
+
+        <h3>Horas ahorradas por mes, por oportunidad</h3>
+        <div class="tarjeta"><div id="grafico" class="barras" role="img" aria-describedby="tablaOps"></div></div>
+
+        <h3>Oportunidades priorizadas</h3>
+        <div class="tarjeta tabla-wrap">
+          <table id="tablaOps">
+            <thead><tr><th>#</th><th>Proceso</th><th>Solución</th><th class="num">h/mes</th><th class="num">Ahorro/mes</th>
+              <th class="num">Complejidad</th><th>Fase</th><th>Validado</th></tr></thead>
+            <tbody id="ops"></tbody>
+          </table>
+        </div>
+
+        <h3>Procesos detectados</h3>
+        <div class="tarjeta tabla-wrap">
+          <table>
+            <thead><tr><th>Proceso</th><th>Área</th><th class="num">Confianza</th><th>Fuentes</th><th>Dolores principales</th></tr></thead>
+            <tbody id="procesos"></tbody>
+          </table>
+        </div>
+
+        <h3>Informes</h3>
+        <div id="informes" class="tarjeta"></div>
+      </div>
+
+      <h2>Procesamiento</h2>
+      <div class="tarjeta tabla-wrap">
+        <table>
+          <thead><tr><th>Creado</th><th>LLM</th><th>Estado</th><th>Etapa</th><th>Mensaje</th></tr></thead>
+          <tbody id="trabajos"></tbody>
+        </table>
+      </div>
+
+      <h2>Archivos del cliente</h2>
+      <div class="tarjeta tabla-wrap">
+        <table>
+          <thead><tr><th>Archivo</th><th class="num">Tamaño</th><th>Subido</th></tr></thead>
+          <tbody id="archivos"></tbody>
+        </table>
+      </div>
+
+      <h2>Cuestionario</h2>
+      <div id="cuestionario" class="tarjeta"></div>
+
+      <h2>Accesos</h2>
+      <form id="formInvitar" class="tarjeta fila">
+        <div><label>Invitar otro correo a este proyecto</label><input name="email" type="email" required></div>
+        <div style="flex: 0 0 auto;"><button type="submit">Invitar</button></div>
+      </form>
+    </section>
+  </main>
+  <div id="tooltip" class="tooltip oculto" role="tooltip"></div>
+
+  <script src="/static/vendor/supabase.js"></script>
+  <script src="/config.js"></script>
+  <script src="/static/app.js"></script>
+  <script>
+    let actual = null, sondeo = null;
+    const num = (v, d = 0) => Number(v ?? 0).toLocaleString("es", { maximumFractionDigits: d });
+
+    async function cargarLista() {
+      const { data } = await sb.from("proyectos").select("*, archivos(count)").order("updated_at", { ascending: false });
+      $("#proyectos").innerHTML = (data || []).map(p => `
+        <tr class="clic" data-id="${esc(p.id)}"><td>${esc(p.empresa)}</td><td>${esc(p.sector)}</td><td>${chipEstado(p.estado)}</td>
+        <td class="num">${p.archivos?.[0]?.count ?? 0}</td><td class="muted">${fecha(p.updated_at)}</td></tr>`).join("")
+        || `<tr><td colspan="5" class="muted">Sin proyectos.</td></tr>`;
+      $("#proyectos").querySelectorAll("tr[data-id]").forEach(tr => tr.onclick = () => verDetalle(tr.dataset.id));
+    }
+
+    function verLista() {
+      clearInterval(sondeo);
+      actual = null;
+      $("#vistaDetalle").classList.add("oculto");
+      $("#vistaLista").classList.remove("oculto");
+      history.replaceState(null, "", "/admin");
+      cargarLista();
+    }
+
+    async function verDetalle(id) {
+      actual = id;
+      history.replaceState(null, "", `/admin#${id}`);
+      $("#vistaLista").classList.add("oculto");
+      $("#vistaDetalle").classList.remove("oculto");
+      mensaje($("#msgDetalle"), "");
+      await refrescar();
+      clearInterval(sondeo);
+      sondeo = setInterval(refrescar, 5000);  // estado del worker en vivo
+    }
+
+    async function refrescar() {
+      if (!actual) return;
+      const id = actual;
+      const [{ data: p }, { data: arch }, { data: q }, { data: trab }, { data: res }] = await Promise.all([
+        sb.from("proyectos").select("*").eq("id", id).single(),
+        sb.from("archivos").select("*").eq("proyecto_id", id).order("created_at"),
+        sb.from("cuestionarios").select("datos").eq("proyecto_id", id).maybeSingle(),
+        sb.from("trabajos").select("*").eq("proyecto_id", id).order("created_at", { ascending: false }).limit(10),
+        sb.from("resultados").select("*").eq("proyecto_id", id).maybeSingle(),
+      ]);
+      if (id !== actual || !p) return;
+      $("#dEmpresa").textContent = `${p.empresa} (${p.sector})`;
+      $("#dEstado").innerHTML = chipEstado(p.estado);
+      const enCurso = (trab || []).some(t => ["pendiente", "ejecutando"].includes(t.estado));
+      $("#btnProcesar").disabled = enCurso || !arch?.length;
+      $("#btnReabrir").disabled = p.estado === "recibiendo";
+      $("#btnEntregar").disabled = p.estado !== "analizado";
+
+      $("#archivos").innerHTML = (arch || []).map(a => `<tr><td>${esc(a.nombre)}</td><td class="num">${mb(a.tamano)}</td>
+        <td class="muted">${fecha(a.created_at)}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">Sin archivos.</td></tr>`;
+      $("#trabajos").innerHTML = (trab || []).map(t => `<tr><td class="muted">${fecha(t.created_at)}</td><td>${esc(t.proveedor_llm)}</td>
+        <td>${chipEstado(t.estado)}</td><td>${esc(t.etapa)}</td><td class="chico">${esc(t.mensaje)}</td></tr>`).join("")
+        || `<tr><td colspan="5" class="muted">Sin trabajos.</td></tr>`;
+      pintarCuestionario(q?.datos);
+      if (res && res.updated_at !== $("#resultados").dataset.version) await pintarResultados(res);
+      $("#sinResultados").classList.toggle("oculto", !!res);
+      $("#resultados").classList.toggle("oculto", !res);
+    }
+
+    function pintarCuestionario(d) {
+      if (!d) return $("#cuestionario").innerHTML = `<span class="muted">El cliente aún no completa el cuestionario.</span>`;
+      const e = d.empresa || {};
+      $("#cuestionario").innerHTML = `
+        <p style="margin-top: 0;">Empleados: ${esc(e.empleados ?? "s/d")} | Herramientas: ${esc((e.herramientas_actuales || []).join(", ") || "s/d")}
+        ${e.restricciones?.length ? `<br>Restricciones: ${esc(e.restricciones.join("; "))}` : ""}</p>
+        <div class="tabla-wrap"><table><thead><tr><th>Proceso</th><th>Responsable</th><th class="num">h/mes</th><th class="num">Personas</th>
+        <th class="num">USD/h</th><th class="num">Dolor</th><th>Notas</th></tr></thead><tbody>
+        ${(d.procesos || []).map(p => `<tr><td>${esc(p.nombre)}</td><td>${esc(p.responsable)}</td><td class="num">${esc(p.horas_mes ?? "")}</td>
+          <td class="num">${esc(p.personas ?? "")}</td><td class="num">${esc(p.costo_hora ?? "")}</td><td class="num">${esc(p.dolor ?? "")}</td>
+          <td class="chico">${esc(p.notas)}</td></tr>`).join("") || `<tr><td colspan="7" class="muted">Sin procesos declarados.</td></tr>`}
+        </tbody></table></div>
+        <p class="chico muted">Roles: ${esc((d.roles || []).map(r => `${r.rol} (${r.personas ?? "?"}, ${r.nivel_digital})`).join(", ") || "s/d")}</p>`;
+    }
+
+    async function pintarResultados(res) {
+      $("#resultados").dataset.version = res.updated_at;
+      const diag = res.diagnostico, ops = diag.oportunidades || [];
+      const h = ops.reduce((s, o) => s + o.horas_ahorradas_mes, 0), ahorro = ops.reduce((s, o) => s + o.ahorro_mensual, 0);
+      const validadas = ops.filter(o => o.datos_validados).length;
+      const costo = res.resumen?.extraccion?.costo_usd;
+      const kpi = (v, etq) => `<div class="tarjeta kpi"><div class="valor">${v}</div><div class="etiqueta">${esc(etq)}</div></div>`;
+      $("#kpis").innerHTML = kpi(num(diag.procesos.length), "procesos detectados") + kpi(num(h), "horas ahorradas / mes")
+        + kpi(`USD ${num(ahorro)}`, "ahorro estimado / mes") + kpi(`${validadas}/${ops.length}`, "estimaciones validadas")
+        + (costo != null ? kpi(`USD ${num(costo, 3)}`, "costo del análisis LLM") : "");
+      $("#avisoSupuestos").classList.toggle("oculto", validadas === ops.length);
+      $("#avisoSupuestos").textContent = `${ops.length - validadas} oportunidades usan horas supuestas: valídalas con el cliente antes de presentar el ROI.`;
+
+      // Grafico: una serie, barras horizontales ordenadas por valor; la tabla de abajo es su vista accesible
+      const orden = [...ops].sort((a, b) => b.horas_ahorradas_mes - a.horas_ahorradas_mes);
+      const max = Math.max(1, ...orden.map(o => o.horas_ahorradas_mes));
+      $("#grafico").innerHTML = orden.map((o, i) => `
+        <div class="nombre" title="${esc(o.proceso_nombre)}">${esc(o.proceso_nombre)}</div>
+        <div class="pista" data-i="${i}"><div class="barra" style="width: calc(${(o.horas_ahorradas_mes / max) * 100}% - 60px)"></div>
+        <span class="valor">${num(o.horas_ahorradas_mes, 1)} h</span></div>`).join("");
+      const tip = $("#tooltip");
+      $("#grafico").querySelectorAll(".pista").forEach(el => {
+        const o = orden[el.dataset.i];
+        el.onmousemove = e => {
+          tip.innerHTML = `<strong>${esc(o.proceso_nombre)}</strong><br>${num(o.horas_ahorradas_mes, 1)} h/mes de ${num(o.horas_mes, 1)} h
+            (${Math.round(o.automatizable * 100)}%)<br>USD ${num(o.ahorro_mensual)} / mes<br><span class="muted">${o.datos_validados ? "Validado" : "Horas supuestas"}</span>`;
+          tip.style.left = `${Math.min(e.clientX + 14, innerWidth - 300)}px`;
+          tip.style.top = `${e.clientY + 14}px`;
+          tip.classList.remove("oculto");
+        };
+        el.onmouseleave = () => tip.classList.add("oculto");
+      });
+
+      $("#ops").innerHTML = ops.map((o, i) => `<tr><td>${i + 1}</td><td>${esc(o.proceso_nombre)}</td><td class="chico">${esc(o.solucion)}</td>
+        <td class="num">${num(o.horas_ahorradas_mes, 1)}</td><td class="num">USD ${num(o.ahorro_mensual)}</td><td class="num">${o.complejidad}/5</td>
+        <td class="chico">${esc(o.fase)}</td><td>${o.datos_validados ? `<span class="estado ok">Sí</span>` : `<span class="estado aviso">No</span>`}</td></tr>`).join("");
+      $("#procesos").innerHTML = diag.procesos.map(p => `<tr><td>${esc(p.nombre)}</td><td>${esc(p.area)}</td>
+        <td class="num">${Math.round(p.confianza * 100)}%</td><td class="chico">${esc(p.fuentes_deteccion.join(", "))}</td>
+        <td class="chico">${p.dolores.slice(0, 3).map(esc).join("<br>")}</td></tr>`).join("");
+
+      try {
+        const inf = await api(`/api/admin/proyectos/${actual}/informes`);
+        $("#informes").innerHTML = inf.map(f => `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.nombre)}</a>`).join("<br>")
+          || `<span class="muted">Sin informes.</span>`;
+      } catch (e) { $("#informes").textContent = e.message; }
+    }
+
+    async function accion(fn, ok) {
+      try { await fn(); mensaje($("#msgDetalle"), ok); refrescar(); }
+      catch (e) { mensaje($("#msgDetalle"), e.message, true); }
+    }
+
+    $("#btnProcesar").onclick = () => accion(() => api(`/api/admin/proyectos/${actual}/procesar`,
+      { method: "POST", body: JSON.stringify({ proveedor_llm: $("#llm").value }) }), "Trabajo encolado. El worker lo tomará en segundos.");
+    $("#btnReabrir").onclick = () => accion(() => api(`/api/admin/proyectos/${actual}/estado/recibiendo`, { method: "POST" }),
+      "Carga reabierta: el cliente puede volver a subir archivos.");
+    $("#btnEntregar").onclick = () => accion(() => api(`/api/admin/proyectos/${actual}/estado/entregado`, { method: "POST" }),
+      "Proyecto marcado como entregado.");
+
+    $("#formNuevo").onsubmit = async e => {
+      e.preventDefault();
+      const f = e.target;
+      try {
+        const r = await api("/api/admin/proyectos", { method: "POST",
+          body: JSON.stringify({ empresa: f.empresa.value.trim(), sector: f.sector.value, email_cliente: f.email.value.trim() }) });
+        mensaje($("#msgNuevo"), r.invitado ? "Proyecto creado. Invitación enviada por correo." : "Proyecto creado. El usuario ya existia: puede entrar desde /login.");
+        f.reset();
+        cargarLista();
+      } catch (err) { mensaje($("#msgNuevo"), err.message, true); }
+    };
+    $("#formInvitar").onsubmit = async e => {
+      e.preventDefault();
+      const email = e.target.email.value.trim();
+      await accion(() => api(`/api/admin/proyectos/${actual}/invitar`, { method: "POST", body: JSON.stringify({ email }) }),
+        `Acceso otorgado a ${email}.`);
+      e.target.reset();
+    };
+
+    (async () => {
+      const s = await sesion();
+      const { data: perfil } = await sb.from("perfiles").select("rol").eq("id", s.user.id).single();
+      if (perfil?.rol !== "admin") return location.href = "/portal";
+      location.hash.length > 1 ? verDetalle(location.hash.slice(1)) : verLista();
+    })();
+  </script>
+</body>
+</html>

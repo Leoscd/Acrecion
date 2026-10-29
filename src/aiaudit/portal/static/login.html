@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acceso al portal</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <main style="max-width: 420px; padding-top: 12vh;">
+    <div class="tarjeta">
+      <h1 style="font-size: 20px; margin-top: 0;">Portal de diagnóstico</h1>
+      <p class="muted">Ingresa el correo con el que fuiste invitado. Te enviaremos un enlace de acceso.</p>
+      <form id="form">
+        <label for="email">Correo</label>
+        <input id="email" type="email" required autocomplete="email">
+        <p></p>
+        <button class="primario" type="submit" style="width: 100%;">Enviar enlace</button>
+      </form>
+      <p id="msg" class="mensaje"></p>
+    </div>
+  </main>
+  <script src="/static/vendor/supabase.js"></script>
+  <script src="/config.js"></script>
+  <script src="/static/app.js"></script>
+  <script>
+    sb.auth.getSession().then(({ data }) => { if (data.session) location.href = "/portal"; });
+    $("#form").addEventListener("submit", async e => {
+      e.preventDefault();
+      const boton = e.submitter;
+      boton.disabled = true;
+      // shouldCreateUser: false -> solo entran usuarios invitados por la consultora
+      const { error } = await sb.auth.signInWithOtp({
+        email: $("#email").value.trim(),
+        options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/portal` },
+      });
+      boton.disabled = false;
+      mensaje($("#msg"), error ? "No pudimos enviar el enlace. Verifica que el correo esté invitado." : "Revisa tu correo y abre el enlace.", !!error);
+    });
+  </script>
+</body>
+</html>
