@@ -8,8 +8,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from aiaudit.portal import app as portal_app
-from aiaudit.portal import supa
-from aiaudit.portal.worker import Worker, cuestionario_yaml, nombre_seguro
+from aiaudit.portal import gestion, supa
+from aiaudit.portal.worker import Worker, cuestionario_yaml, nombre_seguro, sano
 from fake_supabase import FakeSupabase
 
 RAIZ = Path(__file__).resolve().parents[1]
@@ -19,6 +19,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 def entorno(monkeypatch):
     sb = FakeSupabase()
     monkeypatch.setattr(portal_app, "servicio", lambda: sb)
+    monkeypatch.setattr(gestion, "servicio", lambda: sb)
     for k, v in {"SUPABASE_URL": "https://x.supabase.co", "SUPABASE_ANON_KEY": "publica",
                  "SUPABASE_SERVICE_ROLE_KEY": "SECRETA", "PUBLIC_URL": "https://portal.test"}.items():
         monkeypatch.setenv(k, v)
@@ -105,7 +106,7 @@ def test_worker_de_punta_a_punta(entorno, tmp_path):
     res = sb.db["resultados"][0]
     assert res["diagnostico"]["oportunidades"] and len(res["informes"]) == 4
     assert all(r in sb.store[supa.BUCKET_INFORMES] for r in res["informes"])
-    assert not (tmp_path / "data" / pid / "raw").exists(), "los crudos no deben quedar en el disco del VPS"
+    assert not (tmp_path / "data" / pid).exists(), "ningun dato del cliente debe quedar en el disco del VPS"
     assert sum(o["datos_validados"] for o in res["diagnostico"]["oportunidades"]) == 3
 
     inf = c.get(f"/api/admin/proyectos/{pid}/informes", headers=adm).json()
@@ -140,3 +141,52 @@ def test_utilidades():
     assert nombre_seguro("passwd", usados) == "passwd_1"
     y = cuestionario_yaml({"empresa": "ACME", "sector": "pyme"}, {"empresa": {"empleados": 5}, "procesos": []})
     assert "nombre: ACME" in y and "empleados: 5" in y
+
+
+def test_accesos_listar_y_quitar(entorno):
+    sb, c = entorno
+    adm = h("admin@consultora.cl")
+    pid = c.post("/api/admin/proyectos", json={"empresa": "E", "email_cliente": "cliente@empresa.cl"}, headers=adm).json()["proyecto"]["id"]
+    c.post(f"/api/admin/proyectos/{pid}/invitar", json={"email": "otro@empresa.cl"}, headers=adm)
+    miembros = c.get(f"/api/admin/proyectos/{pid}/miembros", headers=adm).json()
+    assert {m["email"] for m in miembros} == {"cliente@empresa.cl", "otro@empresa.cl"}
+    otro = next(m["id"] for m in miembros if m["email"] == "otro@empresa.cl")
+    assert c.delete(f"/api/admin/proyectos/{pid}/miembros/{otro}", headers=adm).status_code == 200
+    assert [m["email"] for m in c.get(f"/api/admin/proyectos/{pid}/miembros", headers=adm).json()] == ["cliente@empresa.cl"]
+    assert c.get(f"/api/admin/proyectos/{pid}/miembros", headers=h("cliente@empresa.cl")).status_code == 403
+
+
+def test_eliminar_proyecto_borra_storage(entorno):
+    sb, c = entorno
+    adm = h("admin@consultora.cl")
+    pid = c.post("/api/admin/proyectos", json={"empresa": "E", "email_cliente": "cliente@empresa.cl"}, headers=adm).json()["proyecto"]["id"]
+    sb.storage.from_(supa.BUCKET_ARCHIVOS).upload(f"{pid}/a.pdf", b"x")
+    sb.table("archivos").insert({"proyecto_id": pid, "ruta": f"{pid}/a.pdf", "nombre": "a.pdf"}).execute()
+    sb.storage.from_(supa.BUCKET_INFORMES).upload(f"{pid}/01.docx", b"y")
+    sb.table("resultados").upsert({"proyecto_id": pid, "diagnostico": {}, "informes": [f"{pid}/01.docx"]}).execute()
+    t = sb.table("trabajos").insert({"proyecto_id": pid, "estado": "ejecutando"}).execute().data[0]
+    assert c.delete(f"/api/admin/proyectos/{pid}", headers=adm).status_code == 409
+    t["estado"] = "ok"
+    r = c.delete(f"/api/admin/proyectos/{pid}", headers=adm).json()
+    assert r == {"ok": True, "archivos_borrados": 1, "informes_borrados": 1}
+    assert not sb.store[supa.BUCKET_ARCHIVOS] and not sb.store[supa.BUCKET_INFORMES]
+    assert c.delete(f"/api/admin/proyectos/{pid}", headers=adm).status_code == 404
+
+
+def test_cli_crear_y_quitar_admin(entorno):
+    sb, _ = entorno
+    uid, invitado = gestion.crear_admin("Nuevo@Consultora.cl")
+    assert invitado and sb.invitados == ["nuevo@consultora.cl"]
+    assert next(p for p in sb.db["perfiles"] if p["id"] == uid)["rol"] == "admin"
+    _, invitado = gestion.crear_admin("cliente@empresa.cl")
+    assert not invitado
+    gestion.quitar_admin("cliente@empresa.cl")
+    assert next(p for p in sb.db["perfiles"] if p["email"] == "cliente@empresa.cl")["rol"] == "cliente"
+
+
+def test_latido_worker(entorno, tmp_path):
+    sb, _ = entorno
+    w = Worker(sb=sb, data_dir=tmp_path)
+    assert not sano(tmp_path)
+    w.latido()
+    assert sano(tmp_path)

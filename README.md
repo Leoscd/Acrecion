@@ -66,4 +66,4 @@ Cada etapa lee y escribe en disco, así que se puede usar sola en otro proyecto,
 
 ## Portal web
 
-Los clientes suben sus archivos y llenan el cuestionario desde el navegador; tú procesas y revisas los resultados en `/admin`. Stack: Supabase (login, Postgres con RLS, Storage) + FastAPI + un worker que corre este pipeline. Código en `src/aiaudit/portal/`, migración en `supabase/migrations/`. Instalación y despliegue en [DEPLOY.md](DEPLOY.md).
+Los clientes suben sus archivos y llenan el cuestionario desde el navegador; tú procesas y revisas los resultados en `/admin`. Stack: Supabase (login, Postgres con RLS, Storage) + FastAPI + un worker que corre este pipeline. Código en `src/aiaudit/portal/`, migración en `supabase/migrations/`. Instalación y despliegue en [DEPLOY.md](DEPLOY.md). Los tests corren en GitHub Actions en cada push y PR (`.github/workflows/tests.yml`).

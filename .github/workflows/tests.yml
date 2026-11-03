@@ -1,0 +1,30 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Dependencias del sistema
+        # postgresql: test_migracion levanta un Postgres efimero para probar RLS
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libmagic1 postgresql
+
+      - name: Instalar paquete
+        # sin [docs] ni whisper: Docling/torch son pesados y los tests usan el respaldo MarkItDown
+        run: |
+          pip install -e ".[dev,portal,llm,comms,mining,privacy,magic]" rapidocr-onnxruntime
+          python -m spacy download es_core_news_md
+
+      - name: Tests
+        run: pytest -q tests

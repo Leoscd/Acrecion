@@ -12,7 +12,8 @@ Cliente (navegador) ──> Caddy (HTTPS) ──> web: FastAPI (páginas + API a
 
 - El cliente solo sube archivos y llena el cuestionario de sus proyectos. RLS impide que vea otros proyectos, trabajos o resultados.
 - La clave `SUPABASE_SERVICE_ROLE_KEY` solo vive en el VPS (web y worker). Al navegador solo llega la clave publicable.
-- Los archivos crudos se descargan al VPS solo mientras dura el procesamiento. En Storage se borran automáticamente cuando vence `retencion_dias` (90 por defecto).
+- Ningún dato del cliente queda en el VPS: al terminar cada trabajo el worker borra la carpeta completa del proyecto (archivos, texto extraído y mapa de anonimización). Lo que se conserva vive en Supabase.
+- En Storage, los archivos crudos se borran automáticamente cuando vence `retencion_dias` (90 por defecto). Desde el panel puedes eliminar un proyecto completo en cualquier momento.
 
 ## 1. Supabase (una vez)
 
@@ -23,10 +24,11 @@ Cliente (navegador) ──> Caddy (HTTPS) ──> web: FastAPI (páginas + API a
    - Site URL: `https://portal.tudominio.com`
    - Redirect URLs: `https://portal.tudominio.com/portal`
 5. **Authentication > SMTP**: configura un SMTP propio (Resend, Brevo, etc.). El correo incluido en Supabase tiene un límite muy bajo de envíos por hora y no sirve para invitar clientes.
-6. Crea tu usuario admin: Authentication > Users > Invite user (con tu correo). Después ejecuta en el SQL Editor:
-   ```sql
-   update public.perfiles set rol = 'admin' where email = 'tu@correo.com';
+6. Crea tu usuario admin después de levantar el VPS (paso 2):
+   ```bash
+   docker compose run --rm web aiaudit-portal crear-admin tu@correo.com
    ```
+   Te llega la invitación por correo y entras a `/admin`. También existen `aiaudit-portal admins` y `aiaudit-portal quitar-admin`.
 
 ## 2. VPS
 
@@ -39,7 +41,10 @@ docker compose up -d --build
 docker compose logs -f worker
 ```
 
-Caddy obtiene el certificado HTTPS automáticamente. La primera vez que el worker procesa algo, descarga los modelos de Docling y Whisper; quedan guardados en el volumen `modelos`.
+Caddy obtiene el certificado HTTPS automáticamente.
+
+- **Modelos:** la imagen descarga los modelos de Docling, Whisper y OCR durante el build, así el primer análisis no espera. Para una imagen más liviana, usa `docker compose build --build-arg PRECARGAR_MODELOS=0`; en ese caso se descargan en el primer uso y quedan en el volumen `modelos`.
+- **Salud:** `docker compose ps` muestra `healthy`/`unhealthy`. El `web` responde en `/api/salud`. El `worker` marca un latido en cada vuelta y en cada etapa; queda `unhealthy` si pasa más de 3 horas sin señal (un archivo de audio muy largo puede tardar).
 
 Para actualizar:
 ```bash

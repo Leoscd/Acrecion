@@ -99,10 +99,25 @@
       <div id="cuestionario" class="tarjeta"></div>
 
       <h2>Accesos</h2>
-      <form id="formInvitar" class="tarjeta fila">
-        <div><label>Invitar otro correo a este proyecto</label><input name="email" type="email" required></div>
-        <div style="flex: 0 0 auto;"><button type="submit">Invitar</button></div>
-      </form>
+      <div class="tarjeta">
+        <div class="tabla-wrap">
+          <table>
+            <thead><tr><th>Correo</th><th>Rol</th><th></th></tr></thead>
+            <tbody id="miembros"></tbody>
+          </table>
+        </div>
+        <form id="formInvitar" class="fila" style="margin-top: 12px;">
+          <div><label>Invitar otro correo a este proyecto</label><input name="email" type="email" required></div>
+          <div style="flex: 0 0 auto;"><button type="submit">Invitar</button></div>
+        </form>
+      </div>
+
+      <h2>Eliminar proyecto</h2>
+      <div class="tarjeta">
+        <p class="muted" style="margin-top: 0;">Borra definitivamente los archivos del cliente, los informes, el cuestionario y los resultados.
+          No se puede deshacer.</p>
+        <button id="btnEliminar" class="peligro">Eliminar proyecto</button>
+      </div>
     </section>
   </main>
   <div id="tooltip" class="tooltip oculto" role="tooltip"></div>
@@ -138,6 +153,7 @@
       $("#vistaLista").classList.add("oculto");
       $("#vistaDetalle").classList.remove("oculto");
       mensaje($("#msgDetalle"), "");
+      cargarMiembros();
       await refrescar();
       clearInterval(sondeo);
       sondeo = setInterval(refrescar, 5000);  // estado del worker en vivo
@@ -155,6 +171,7 @@
       ]);
       if (id !== actual || !p) return;
       $("#dEmpresa").textContent = `${p.empresa} (${p.sector})`;
+      $("#dEmpresa").dataset.empresa = p.empresa;
       $("#dEstado").innerHTML = chipEstado(p.estado);
       const enCurso = (trab || []).some(t => ["pendiente", "ejecutando"].includes(t.estado));
       $("#btnProcesar").disabled = enCurso || !arch?.length;
@@ -252,7 +269,7 @@
       try {
         const r = await api("/api/admin/proyectos", { method: "POST",
           body: JSON.stringify({ empresa: f.empresa.value.trim(), sector: f.sector.value, email_cliente: f.email.value.trim() }) });
-        mensaje($("#msgNuevo"), r.invitado ? "Proyecto creado. Invitación enviada por correo." : "Proyecto creado. El usuario ya existia: puede entrar desde /login.");
+        mensaje($("#msgNuevo"), r.invitado ? "Proyecto creado. Invitación enviada por correo." : "Proyecto creado. El usuario ya existía: puede entrar desde /login.");
         f.reset();
         cargarLista();
       } catch (err) { mensaje($("#msgNuevo"), err.message, true); }
@@ -263,6 +280,33 @@
       await accion(() => api(`/api/admin/proyectos/${actual}/invitar`, { method: "POST", body: JSON.stringify({ email }) }),
         `Acceso otorgado a ${email}.`);
       e.target.reset();
+      cargarMiembros();
+    };
+
+    async function cargarMiembros() {
+      const id = actual;
+      try {
+        const lista = await api(`/api/admin/proyectos/${id}/miembros`);
+        if (id !== actual) return;
+        $("#miembros").innerHTML = lista.map(m => `<tr><td>${esc(m.email)}</td><td>${esc(m.rol)}</td>
+          <td><button class="link" data-quitar="${esc(m.id)}" data-email="${esc(m.email)}">Quitar acceso</button></td></tr>`).join("")
+          || `<tr><td colspan="3" class="muted">Sin accesos.</td></tr>`;
+        $("#miembros").querySelectorAll("[data-quitar]").forEach(b => b.onclick = async () => {
+          if (!confirm(`¿Quitar el acceso de ${b.dataset.email} a este proyecto?`)) return;
+          await accion(() => api(`/api/admin/proyectos/${actual}/miembros/${b.dataset.quitar}`, { method: "DELETE" }),
+            `Acceso de ${b.dataset.email} quitado.`);
+          cargarMiembros();
+        });
+      } catch (e) { $("#miembros").innerHTML = `<tr><td colspan="3" class="mensaje error">${esc(e.message)}</td></tr>`; }
+    }
+
+    $("#btnEliminar").onclick = async () => {
+      const empresa = $("#dEmpresa").dataset.empresa;
+      if (prompt(`Para confirmar, escribe el nombre de la empresa: ${empresa}`) !== empresa) return;
+      try {
+        await api(`/api/admin/proyectos/${actual}`, { method: "DELETE" });
+        verLista();
+      } catch (e) { mensaje($("#msgDetalle"), e.message, true); }
     };
 
     (async () => {

@@ -35,6 +35,7 @@ all      = ["aiaudit[llm,docs,comms,media,mining,privacy,magic]"]
 
 [project.scripts]
 aiaudit = "aiaudit.cli:app"
+aiaudit-portal = "aiaudit.portal.gestion:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -17,6 +17,11 @@ COPY scripts ./scripts
 RUN pip install --no-cache-dir -e ".[all,portal]" \
     && python -m spacy download es_core_news_md
 
+# Modelos de Docling/Whisper/OCR dentro de la imagen: el primer analisis no espera descargas.
+# Desactivar con --build-arg PRECARGAR_MODELOS=0 para una imagen mas liviana.
+ARG PRECARGAR_MODELOS=1
+RUN if [ "$PRECARGAR_MODELOS" = "1" ]; then python scripts/precargar_modelos.py; fi
+
 ENV AIAUDIT_DATA_DIR=/data PYTHONUNBUFFERED=1
 VOLUME ["/data", "/root/.cache"]
 EXPOSE 8000

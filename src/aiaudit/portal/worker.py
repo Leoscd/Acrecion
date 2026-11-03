@@ -2,7 +2,8 @@
 
 Uso: python -m aiaudit.portal.worker
 Flujo por trabajo: descargar archivos -> escribir cuestionario.yaml -> pipeline.ejecutar -> subir informes
--> guardar diagnostico en 'resultados' -> borrar los archivos crudos del disco local.
+-> guardar diagnostico en 'resultados' -> borrar del disco local TODO lo del proyecto (crudos, texto extraido,
+mapa de anonimizacion): lo que se conserva vive en Supabase.
 Cada hora purga de Storage los archivos de proyectos analizados que superaron su retencion.
 """
 from __future__ import annotations
@@ -54,6 +55,7 @@ class Worker:
 
     def _trabajo(self, id_: str, **campos):
         self.sb.table("trabajos").update(campos).eq("id", id_).execute()
+        self.latido()  # cada cambio de etapa cuenta como señal de vida
 
     def _proyecto(self, id_: str, **campos):
         self.sb.table("proyectos").update(campos).eq("id", id_).execute()
@@ -106,7 +108,7 @@ class Worker:
             self._trabajo(t["id"], estado="error", terminado_at=_ahora(), mensaje=f"{type(e).__name__}: {e}"[:1000])
             self._proyecto(pid, estado="enviado")
         finally:
-            shutil.rmtree(cliente.raw, ignore_errors=True)  # los crudos solo viven en Storage
+            shutil.rmtree(cliente.base, ignore_errors=True)  # datos del cliente: solo en Supabase, nunca en el VPS
 
     def purgar_vencidos(self) -> int:
         """Borra de Storage los archivos crudos de proyectos analizados/entregados con retencion vencida."""
@@ -124,6 +126,11 @@ class Worker:
                 borrados += len(rutas)
         return borrados
 
+    def latido(self):
+        """Marca de vida para el healthcheck de Docker."""
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        (self.data_dir / ".latido").write_text(_ahora())
+
     def una_vuelta(self) -> bool:
         trabajos = self.sb.rpc("tomar_trabajo").execute().data or []
         for t in trabajos:
@@ -135,6 +142,7 @@ class Worker:
         ultima_purga = 0.0
         while True:
             try:
+                self.latido()
                 if time.time() - ultima_purga > 3600:
                     if n := self.purgar_vencidos():
                         log.info("Purgados %d archivos vencidos", n)
@@ -146,6 +154,15 @@ class Worker:
                 time.sleep(intervalo * 3)
 
 
+def sano(data_dir: Path, max_segundos: float = 300) -> bool:
+    """True si el worker marco latido hace menos de max_segundos (un trabajo largo no marca latido)."""
+    marca = data_dir / ".latido"
+    return marca.exists() and time.time() - marca.stat().st_mtime < max_segundos
+
+
 if __name__ == "__main__":
+    import sys
+    if sys.argv[1:] == ["--salud"]:
+        sys.exit(0 if sano(Path(env("AIAUDIT_DATA_DIR", str(Path.cwd() / "data"))), 3600 * 3) else 1)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     Worker().bucle(float(env("WORKER_INTERVALO", "10")))

@@ -67,6 +67,7 @@ button {
   border: 1px solid var(--borde); background: var(--surface); color: var(--texto);
 }
 button.primario { background: var(--acento); color: var(--acento-texto); border-color: var(--acento); }
+button.peligro { color: var(--error); border-color: var(--error); }
 button:disabled { opacity: .5; cursor: not-allowed; }
 button.link { border: 0; background: none; color: var(--acento); padding: 0; text-decoration: underline; }
 .tabla-wrap { overflow-x: auto; }

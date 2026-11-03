@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 
-from aiaudit.portal.supa import BUCKET_INFORMES, env, servicio
+from aiaudit.portal.supa import BUCKET_ARCHIVOS, BUCKET_INFORMES, env, servicio
 
 STATIC = Path(__file__).parent / "static"
 app = FastAPI(title="aiaudit portal", docs_url=None, redoc_url=None)
@@ -158,3 +158,37 @@ def informes(pid: str, _: dict = Depends(admin)):
         firmada = sb.storage.from_(BUCKET_INFORMES).create_signed_url(ruta, 600)
         salida.append({"nombre": ruta.split("/")[-1], "url": firmada.get("signedURL") or firmada.get("signedUrl")})
     return salida
+
+
+@app.get("/api/admin/proyectos/{pid}/miembros")
+def miembros(pid: str, _: dict = Depends(admin)):
+    sb = servicio()
+    ids = [m["usuario_id"] for m in sb.table("miembros").select("usuario_id").eq("proyecto_id", pid).execute().data]
+    if not ids:
+        return []
+    return sb.table("perfiles").select("id,email,rol").in_("id", ids).execute().data
+
+
+@app.delete("/api/admin/proyectos/{pid}/miembros/{uid}")
+def quitar_miembro(pid: str, uid: str, _: dict = Depends(admin)):
+    """Quita el acceso al proyecto; la cuenta del usuario se conserva por si participa en otros proyectos."""
+    servicio().table("miembros").delete().eq("proyecto_id", pid).eq("usuario_id", uid).execute()
+    return {"ok": True}
+
+
+@app.delete("/api/admin/proyectos/{pid}")
+def eliminar_proyecto(pid: str, _: dict = Depends(admin)):
+    """Borra el proyecto y TODO su contenido: archivos del cliente, informes, cuestionario, trabajos y resultados."""
+    _proyecto(pid)
+    sb = servicio()
+    if sb.table("trabajos").select("id").eq("proyecto_id", pid).eq("estado", "ejecutando").execute().data:
+        raise HTTPException(409, "Hay un trabajo ejecutandose; espera a que termine")
+    archivos = [x["ruta"] for x in sb.table("archivos").select("ruta").eq("proyecto_id", pid).execute().data]
+    res = sb.table("resultados").select("informes").eq("proyecto_id", pid).execute().data
+    informes_ = res[0]["informes"] if res else []
+    if archivos:
+        sb.storage.from_(BUCKET_ARCHIVOS).remove(archivos)
+    if informes_:
+        sb.storage.from_(BUCKET_INFORMES).remove(informes_)
+    sb.table("proyectos").delete().eq("id", pid).execute()  # el resto de las tablas se borra en cascada
+    return {"ok": True, "archivos_borrados": len(archivos), "informes_borrados": len(informes_)}
