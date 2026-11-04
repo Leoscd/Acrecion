@@ -112,3 +112,21 @@ def test_camino_llm_con_fake(cliente):
     assert "flowchart LR" in consolidate.mermaid(p)
     o = opportunity.evaluar(p, opportunity._propuesta_llm(p, llm, []), cliente.settings["priorizacion"])
     assert o.fase.startswith("Fase 1") and not o.datos_validados
+
+
+def test_entregables_con_ortografia(cliente):
+    from docx import Document
+    if not (cliente.outputs / "01_diagnostico.docx").exists():
+        test_pipeline_offline_genera_entregables(cliente)
+    titulos = {f: Document(cliente.outputs / f).paragraphs[0].text
+               for f in ["01_diagnostico.docx", "02_ruta_integracion_ia.docx", "03_plan_capacitacion.docx"]}
+    assert titulos == {"01_diagnostico.docx": "Diagnóstico de procesos e IA",
+                       "02_ruta_integracion_ia.docx": "Ruta de integración de IA",
+                       "03_plan_capacitacion.docx": "Plan de capacitación en IA"}
+
+
+def test_offline_ignora_tildes():
+    frags = [Fragmento(id=f"x#{i}", origen="x", tipo_fuente="documento", texto=t) for i, t in
+             enumerate(["La CUBICACIÓN del edificio y el presupuesto", "Licitación: cubicación pendiente"])]
+    procesos = process_extract.extraer_offline(frags, "construccion")
+    assert "presupuestos" in {p.id_taxonomia for p in procesos}

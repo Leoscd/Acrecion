@@ -10,6 +10,7 @@ import logging
 import re
 from collections import defaultdict
 
+from aiaudit.analyze.consolidate import _norm
 from aiaudit.config import Cliente, leer_jsonl, taxonomia
 from aiaudit.schemas import ExtraccionLLM, Fragmento, ProcesoLLM
 
@@ -29,7 +30,7 @@ Reglas:
 - id_taxonomia: si el proceso corresponde a uno del catalogo, usa su id; si no, "".
 - confianza: 0.9+ evidencia directa y repetida; 0.5 indicios; <0.4 no lo incluyas.
 - frecuencia: diaria | semanal | mensual | por_proyecto | desconocida.
-- Responde en espanol.
+- Responde en español con ortografía correcta (tildes y ñ).
 
 Catalogo de procesos tipo del sector:
 {catalogo}"""
@@ -73,10 +74,10 @@ def extraer_llm(frags: list[Fragmento], sector: str, cfg_llm: dict, llm) -> list
 def extraer_offline(frags: list[Fragmento], sector: str) -> list[ProcesoLLM]:
     procesos = []
     for t in taxonomia(sector):
-        claves = [k.lower() for k in t["palabras_clave"]]
+        claves = [_norm(k) for k in t["palabras_clave"]]  # coincidencia sin tildes ni mayusculas
         evidencias, golpes, herramientas, dolores = [], 0, set(), []
         for f in frags:
-            txt = f.texto.lower()
+            txt = _norm(f.texto)
             n = sum(txt.count(k) for k in claves)
             if n:
                 golpes += n
@@ -108,7 +109,7 @@ def extraer(cliente: Cliente) -> dict:
     else:
         from aiaudit.llm.client import LLM
         if cfg_llm["provider"] == "openai" and not anonimizar:
-            log.warning("ATENCION: se enviaran datos SIN anonimizar a un proveedor externo")
+            log.warning("ATENCIÓN: se enviarán datos SIN anonimizar a un proveedor externo")
         llm = LLM(cfg_llm, cliente.interim / "llm_log.jsonl")
         crudos, fuente = extraer_llm(frags, cliente.sector, cfg_llm, llm), "llm"
         costo = llm.costo_usd

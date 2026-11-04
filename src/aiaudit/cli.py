@@ -95,18 +95,11 @@ def report(cliente: str, llm: str = Proveedor):
 @app.command()
 def run(cliente: str, llm: str = Proveedor, desde: str = typer.Option("ingest", help="ingest | anonymize | analyze | score | report")):
     """Pipeline completo. --desde permite reanudar sin reprocesar etapas previas."""
-    etapas = ["ingest", "anonymize", "analyze", "score", "report"]
-    if desde not in etapas:
-        raise typer.BadParameter(f"--desde debe ser una de {etapas}")
+    from aiaudit.pipeline import ETAPAS, ejecutar
+    if desde not in ETAPAS:
+        raise typer.BadParameter(f"--desde debe ser una de {ETAPAS}")
     c = _cliente(cliente, llm)
-    for etapa in etapas[etapas.index(desde):]:
-        if etapa == "ingest":
-            ingest(cliente)
-        elif etapa == "anonymize":
-            if c.settings["privacidad"]["anonimizar"]:
-                anonymize(cliente)
-        else:
-            {"analyze": analyze, "score": score, "report": report}[etapa](cliente, llm)
+    ejecutar(c, desde, al_avanzar=lambda _, r: [_mostrar(k, v) for k, v in r.items()])
     consola.print(f"[bold]Entregables en {c.outputs}[/]")
 
 
