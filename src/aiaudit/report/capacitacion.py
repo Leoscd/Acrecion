@@ -61,7 +61,7 @@ def generar_docx(empresa: str, diag: Diagnostico, roles: list[dict], llm=None):
     vinetas(doc, ["Qué es un modelo de lenguaje y qué no es", "Cómo escribir instrucciones claras (prompts) con contexto, formato y ejemplos",
                   "Verificación: por qué siempre se revisa la salida", "Política de datos de la empresa: qué se puede y qué no se puede compartir"])
 
-    doc.add_heading("3. Modulos por proceso", 1)
+    doc.add_heading("3. Módulos por proceso", 1)
     for i, o in enumerate(diag.oportunidades, 1):
         p = procesos.get(o.proceso_id)
         m = modulo_base(o, p)
