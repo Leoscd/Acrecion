@@ -67,3 +67,11 @@ Cada etapa lee y escribe en disco, así que se puede usar sola en otro proyecto,
 ## Portal web
 
 Los clientes suben sus archivos y llenan el cuestionario desde el navegador; tú procesas y revisas los resultados en `/admin`. Stack: Supabase (login, Postgres con RLS, Storage) + FastAPI + un worker que corre este pipeline. Código en `src/aiaudit/portal/`, migración en `supabase/migrations/`. Instalación y despliegue en [DEPLOY.md](DEPLOY.md). Los tests corren en GitHub Actions en cada push y PR (`.github/workflows/tests.yml`).
+
+## Auditoría de presupuestos de obra (Excel)
+
+`src/aiaudit/construccion/` lee cada Excel de presupuesto como un modelo de cálculo: reconoce las hojas (parámetros, insumos, APU, itemizado, resumen), arma el grafo de dependencias entre celdas y calcula costo directo, total, costo de construcción por m² y precio de venta por m². Identifica las partidas críticas (Pareto ABC), la composición del costo (materiales, mano de obra, equipos y lo que no tiene desglose) y los hallazgos con su celda exacta: errores y a cuántas celdas contaminan, precios unitarios escritos a mano, fórmulas distintas al resto, números fijos dentro de fórmulas, vínculos a otros libros, partidas duplicadas, unidades inconsistentes, APU sin uso, hojas ocultas y descuadres.
+
+Genera `04_auditoria_presupuestos.docx` con un plan de mejora. Cada hallazgo indica el criterio a mejorar, dónde entra la IA y la herramienta exacta, tomada de `config/herramientas.yaml`. Ese catálogo guarda la fecha de verificación y la fuente de cada herramienta; las que no están verificadas aparecen como "verificar antes de proponer". Conviene revisarlo cada 3 meses.
+
+Demo: `python scripts/demo_presupuesto.py presupuesto.xlsx` genera un presupuesto realista con 11 errores típicos sembrados.

@@ -104,7 +104,7 @@ def test_worker_de_punta_a_punta(entorno, tmp_path):
     assert trabajo["estado"] == "ok", trabajo["mensaje"]
     assert sb.db["proyectos"][0]["estado"] == "analizado"
     res = sb.db["resultados"][0]
-    assert res["diagnostico"]["oportunidades"] and len(res["informes"]) == 4
+    assert res["diagnostico"]["oportunidades"] and len(res["informes"]) == 5
     assert all(r in sb.store[supa.BUCKET_INFORMES] for r in res["informes"])
     assert not (tmp_path / "data" / pid).exists(), "ningun dato del cliente debe quedar en el disco del VPS"
     assert sum(o["datos_validados"] for o in res["diagnostico"]["oportunidades"]) == 3

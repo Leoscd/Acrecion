@@ -20,8 +20,9 @@ def _anonymize(c):
 
 def _analyze(c):
     from aiaudit.analyze import consolidate, process_extract, process_mining
+    from aiaudit.construccion import presupuesto
     return {"extraccion": process_extract.extraer(c), "mining": process_mining.minar(c),
-            "consolidacion": consolidate.consolidar(c)}
+            "presupuestos": presupuesto.analizar_cliente(c), "consolidacion": consolidate.consolidar(c)}
 
 
 def _score(c):

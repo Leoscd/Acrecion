@@ -1,0 +1,107 @@
+# Por cada tipo de hallazgo: que criterio mejorar, como, donde entra la IA y con que herramienta (ids de herramientas.yaml).
+# prioridad: 1 = hacerlo antes de usar el presupuesto para licitar o vender.
+
+error_formula:
+  criterio: Integridad del cálculo
+  mejora: Corregir o eliminar las celdas con error y revisar todo lo que depende de ellas.
+  ia: Pedir a Claude en Excel que rastree cada error hasta su origen y proponga la fórmula correcta.
+  herramientas: [claude_excel, excel_inquire]
+  prioridad: 1
+
+referencia_circular:
+  criterio: Integridad del cálculo
+  mejora: Romper el ciclo separando el dato de entrada del resultado.
+  ia: Usar Claude en Excel para explicar la cadena circular y reescribirla.
+  herramientas: [claude_excel]
+  prioridad: 1
+
+descuadre_totales:
+  criterio: Cuadre del presupuesto
+  mejora: Asegurar que el costo directo sea la suma de todos los capitulos y que cada partida pertenezca a uno.
+  ia: Auditoria automática de subtotales con Claude en Excel o con este sistema en cada version.
+  herramientas: [claude_excel]
+  prioridad: 1
+
+formula_inconsistente:
+  criterio: Transparencia del precio
+  mejora: Usar la misma fórmula en todas las partidas; si hay recargos, ponerlos en una columna visible con su justificacion.
+  ia: Comparación automática de fórmulas por columna (Inquire o Claude en Excel) antes de cada envio.
+  herramientas: [excel_inquire, claude_excel]
+  prioridad: 1
+
+total_escrito_a_mano:
+  criterio: Transparencia del precio
+  mejora: Reemplazar los totales fijos por la fórmula cantidad x precio unitario.
+  ia: Claude en Excel puede detectar y reemplazar los valores fijos en bloque.
+  herramientas: [claude_excel]
+  prioridad: 1
+
+pu_sin_apu:
+  criterio: Respaldo de precios unitarios
+  mejora: Vincular cada precio unitario a su APU (análisis de precio unitario) para que se actualice cuando cambian los insumos.
+  ia: Generar los APU faltantes a partir de partidas similares y de cotizaciones, con revisión del presupuestista.
+  herramientas: [claude_excel, openai_structured]
+  prioridad: 1
+
+pu_global_sin_respaldo:
+  criterio: Respaldo de precios unitarios
+  mejora: Desglosar las partidas globales o vincular la cotización del subcontrato que las respalda.
+  ia: Extraer automáticamente las cotizaciones de subcontratistas (PDF/correo) a una tabla comparativa.
+  herramientas: [openai_structured, n8n]
+  prioridad: 2
+
+alta_proporcion_global:
+  criterio: Trazabilidad del costo
+  mejora: Bajar la proporcion de partidas globales desglosando las mas grandes en cantidades y precios unitarios.
+  ia: Usar IA para proponer el desglose tipico de cada partida global a partir de presupuestos anteriores de la empresa.
+  herramientas: [claude_excel, openai_structured]
+  prioridad: 2
+
+vinculo_externo:
+  criterio: Base de precios centralizada
+  mejora: Reemplazar vínculos a otros archivos por una base de precios única y fechada.
+  ia: Actualizar la base de precios desde cotizaciones y listas de proveedores con extracción automática.
+  herramientas: [power_query, openai_structured, n8n]
+  prioridad: 2
+
+numero_magico:
+  criterio: Parametrización
+  mejora: Mover porcentajes e impuestos (IVA, recargos, gastos generales) a una hoja de parámetros y referenciarlos.
+  ia: Claude en Excel puede encontrar todos los valores fijos dentro de fórmulas y reemplazarlos por referencias.
+  herramientas: [claude_excel]
+  prioridad: 2
+
+partida_duplicada:
+  criterio: Calidad del itemizado
+  mejora: Revisar si es un duplicado real o si una de las partidas debía ser otra (por ejemplo muros vs cielos).
+  ia: Comparar el itemizado contra una lista estándar de partidas para detectar faltantes y repetidas.
+  herramientas: [claude_excel]
+  prioridad: 2
+
+unidad_inconsistente:
+  criterio: Estándar de unidades
+  mejora: Definir una lista cerrada de unidades y usar validación de datos en la columna de unidad. En los APU, usar la unidad del insumo.
+  ia: Normalización automática de unidades al importar cotizaciones y planillas.
+  herramientas: [claude_excel, power_query]
+  prioridad: 3
+
+apu_sin_uso:
+  criterio: Orden del libro
+  mejora: Vincular el APU a su partida o moverlo a un archivo histórico.
+  ia: No requiere IA; basta revisión manual.
+  herramientas: []
+  prioridad: 3
+
+hoja_oculta:
+  criterio: Orden del libro
+  mejora: Mostrar, documentar o eliminar las hojas ocultas.
+  ia: No requiere IA.
+  herramientas: [excel_inquire]
+  prioridad: 3
+
+sin_valores_calculados:
+  criterio: Integridad del cálculo
+  mejora: Abrir y guardar el archivo en Excel antes de enviarlo, para que incluya los valores calculados.
+  ia: No aplica.
+  herramientas: []
+  prioridad: 3
