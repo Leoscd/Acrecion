@@ -86,6 +86,26 @@ def cruzar_cuestionario(procesos: list[Proceso], cuestionario: dict, sector: str
     return procesos
 
 
+def incorporar_presupuestos(procesos: list[Proceso], ruta, sector: str) -> list[Proceso]:
+    """Los hallazgos de la auditoria de Excel son evidencia directa del proceso de presupuestos."""
+    analisis = json.loads(ruta.read_text(encoding="utf-8")) if ruta.exists() else []
+    if not analisis:
+        return procesos
+    p = next((x for x in procesos if x.id == "presupuestos"), None)
+    if p is None:
+        t = {t["id"]: t for t in taxonomia(sector)}.get("presupuestos", {})
+        p = Proceso(id="presupuestos", nombre=t.get("nombre", "Elaboración de presupuestos"), area=t.get("area", ""),
+                    descripcion="Detectado por la auditoría de los presupuestos en Excel.")
+        procesos.append(p)
+    dolores = [f"({a['archivo']}) {h['descripcion']}" for a in analisis for h in a["hallazgos"] if h["severidad"] != "baja"]
+    p.dolores = _unicos(dolores[:6], p.dolores)[:10]
+    p.evidencias = _unicos(p.evidencias, [f"excel:{a['archivo']}" for a in analisis])
+    p.herramientas = _unicos(p.herramientas, ["excel"])
+    p.fuentes_deteccion = _unicos(p.fuentes_deteccion, ["auditoria_excel"])
+    p.confianza = max(p.confianza, 0.9)
+    return procesos
+
+
 def mermaid(p: Proceso) -> str:
     """Diagrama de flujo: pasos manuales en naranja, automatizados en verde."""
     if not p.pasos:
@@ -110,7 +130,8 @@ def _leer_crudos(ruta) -> list[tuple[str, ProcesoLLM]]:
 
 def consolidar(cliente: Cliente) -> dict:
     crudos = _leer_crudos(cliente.processed / "procesos_crudos.json") + _leer_crudos(cliente.processed / "procesos_mining.json")
-    procesos = cruzar_cuestionario(fusionar(crudos), cliente.cuestionario, cliente.sector)
+    procesos = incorporar_presupuestos(fusionar(crudos), cliente.processed / "presupuestos.json", cliente.sector)
+    procesos = cruzar_cuestionario(procesos, cliente.cuestionario, cliente.sector)
     for p in procesos:
         p.diagrama_mermaid = mermaid(p)
     procesos.sort(key=lambda p: p.confianza, reverse=True)

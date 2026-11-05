@@ -16,18 +16,12 @@ RAW = BASE / "raw"
 
 
 def presupuesto():
-    partidas = pd.DataFrame({
-        "Item": ["1.1", "1.2", "2.1", "2.2", "3.1"],
-        "Partida": ["Excavacion", "Relleno compactado", "Hormigon H25 fundaciones", "Acero A630", "Moldajes"],
-        "Unidad": ["m3", "m3", "m3", "kg", "m2"],
-        "Cantidad": [120, 80, 45, 3200, 210],
-        "Precio unitario": [8500, 6200, 98000, 1150, 12500],
-    })
-    partidas["Total"] = partidas["Cantidad"] * partidas["Precio unitario"]
-    with pd.ExcelWriter(RAW / "presupuestos" / "presupuesto_edificio_los_alamos.xlsx") as w:
-        partidas.to_excel(w, sheet_name="Itemizado", index=False)
-        pd.DataFrame({"Nota": ["Cubicacion hecha a mano desde planos PDF", "Precios copiados de cotizaciones por correo",
-                               "Revisar con oficina tecnica antes de enviar la licitacion"]}).to_excel(w, sheet_name="Notas", index=False)
+    """Presupuesto con formulas conectadas (insumos -> APU -> itemizado -> resumen) y errores tipicos sembrados."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("demo_presupuesto", Path(__file__).with_name("demo_presupuesto.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    mod.crear(RAW / "presupuestos" / "presupuesto_edificio_los_alamos.xlsx")
 
 
 def log_compras():

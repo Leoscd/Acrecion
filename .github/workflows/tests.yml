@@ -17,8 +17,8 @@ jobs:
           cache: pip
 
       - name: Dependencias del sistema
-        # postgresql: test_migracion levanta un Postgres efimero para probar RLS
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libmagic1 postgresql
+        # postgresql: Postgres efimero para probar RLS. libreoffice-calc: recalcula el presupuesto sintetico
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libmagic1 postgresql libreoffice-calc
 
       - name: Instalar paquete
         # sin [docs] ni whisper: Docling/torch son pesados y los tests usan el respaldo MarkItDown

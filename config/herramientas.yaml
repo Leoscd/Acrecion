@@ -1,0 +1,74 @@
+# Catalogo de herramientas que el sistema puede recomendar por nombre.
+# REGLA: "verificado" es la fecha en que se confirmo en la fuente que la herramienta existe y hace lo que se describe.
+# Las entradas con verificado: null salen en los informes marcadas "verificar antes de proponer".
+# Revisar este catalogo cada 3 meses: las herramientas de IA cambian de nombre, precio y disponibilidad.
+
+claude_excel:
+  nombre: Claude for Excel (complemento de Anthropic)
+  categoria: excel
+  requisitos: Plan pago de Claude (Pro, Max, Team o Enterprise); Excel para Windows o Mac
+  instalar: "En Excel: Insertar > Complementos > buscar 'Claude by Anthropic'. En Team/Enterprise el admin lo despliega desde el Microsoft 365 Admin Center."
+  uso: Explicar y auditar fórmulas, rastrear de donde sale cada precio, reconstruir vínculos rotos, construir hojas nuevas con lenguaje natural.
+  limitaciones: No trabaja con macros ni con tablas de datos de Excel. El contenido del libro se envia a Anthropic; revisar la política de datos del cliente.
+  fuente: https://pasqualepillitteri.it/en/news/2143/claude-microsoft-365-outlook-beta
+  verificado: 2026-11-05
+
+copilot_excel_agent:
+  nombre: Microsoft 365 Copilot en Excel (Agent Mode)
+  categoria: excel
+  requisitos: Licencia Microsoft 365 Copilot, o Microsoft 365 Personal/Family/Premium (con creditos de IA)
+  instalar: Viene integrado en Excel; se activa desde el panel Copilot.
+  uso: Construir y editar libros con instrucciones en lenguaje natural, en varios pasos.
+  limitaciones: Depende del plan Microsoft 365 del cliente.
+  fuente: https://techcommunity.microsoft.com/blog/excelblog/agent-mode-in-excel-is-now-generally-available-on-desktop/4457408
+  verificado: 2026-11-05
+
+excel_inquire:
+  nombre: Spreadsheet Inquire (complemento de Excel)
+  categoria: excel
+  requisitos: Excel para Windows con Microsoft 365 Apps for enterprise (no existe en Mac)
+  instalar: "Archivo > Opciones > Complementos > Complementos COM > marcar Inquire."
+  uso: Informe de análisis del libro (errores, vínculos externos, fórmulas inconsistentes), mapa de relaciones entre hojas y archivos, comparar dos versiones de un presupuesto.
+  limitaciones: Solo Windows y ediciones enterprise.
+  fuente: https://support.microsoft.com/en-us/office/analyze-a-workbook-with-spreadsheet-inquire-5991e8fa-f1c1-401a-ae3f-469384ae3e3b
+  verificado: 2026-11-05
+
+power_query:
+  nombre: Power Query (incluido en Excel)
+  categoria: excel
+  requisitos: Excel 2016 o superior / Microsoft 365
+  instalar: "Integrado: Datos > Obtener datos."
+  uso: Mantener una base de precios única (insumos) que se actualiza desde cotizaciones o listas de proveedores, en lugar de vínculos a otros libros.
+  limitaciones: Requiere disenar bien la tabla maestra la primera vez.
+  fuente: https://learn.microsoft.com/en-us/power-query/
+  verificado: null
+
+openai_structured:
+  nombre: API de OpenAI con salidas estructuradas (JSON validado)
+  categoria: ia_api
+  requisitos: Cuenta de OpenAI con API key
+  instalar: Integración a medida (la usa este mismo sistema).
+  uso: Leer cotizaciones, facturas o listas de precios en PDF y convertirlas en filas de insumos o APU sin digitar.
+  limitaciones: Requiere revisión humana de lo extraído; costo por uso.
+  fuente: https://platform.openai.com/docs/guides/structured-outputs
+  verificado: null
+
+n8n:
+  nombre: n8n (automatización de flujos)
+  categoria: automatizacion
+  requisitos: Servidor propio (gratis, open source) o plan en la nube
+  instalar: Docker en el VPS o cuenta en n8n.cloud
+  uso: Flujos automáticos, por ejemplo cotización recibida por correo -> extracción con IA -> fila en la base de precios -> aviso al presupuestista.
+  limitaciones: Hay que mantener el servidor y las credenciales.
+  fuente: https://n8n.io
+  verificado: null
+
+autodesk_assistant:
+  nombre: Autodesk Assistant (AutoCAD 2026)
+  categoria: cad
+  requisitos: AutoCAD 2026 con suscripcion vigente
+  instalar: Integrado en AutoCAD 2026.
+  uso: Asistente conversacional dentro de AutoCAD; ademas Smart Blocks (detección y reemplazo de bloques) y Markup Assist.
+  limitaciones: No cubica ni presupuesta; ayuda a dibujar y a estandarizar.
+  fuente: https://www.autodesk.com/products/autocad/features
+  verificado: 2026-11-05

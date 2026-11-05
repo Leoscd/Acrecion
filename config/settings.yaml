@@ -25,3 +25,6 @@ priorizacion:
   horas_mes_supuesto: 10    # se usa SOLO si el proceso no esta en el cuestionario (queda marcado como no validado)
   propuestas_llm: true      # con proveedor LLM, propone la solucion por proceso; si no, usa la taxonomia
   moneda: USD
+
+construccion:
+  moneda_presupuesto: "$"   # moneda en que vienen los presupuestos del cliente (CLP, ARS, MXN...); distinta a la del ROI
